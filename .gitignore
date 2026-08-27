@@ -1,0 +1,14 @@
+target/
+*.class
+
+# ローカルのSQLiteデータ(実行時に自動生成される個人データなのでコミットしない)
+review.db
+review.db-journal
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# エディタ/エージェント関連のローカル状態
+.claude/

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java学習システム</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+</head>
+<body>
+<header>
+    <h1>☕ Java学習システム</h1>
+    <p class="subtitle">Spring Boot × Claude API ― 目標設定・毎日の問題・AIレビュー・進捗可視化で学習を続けるためのツール</p>
+    <div id="goalWidget" class="goal-widget" hidden></div>
+</header>
+
+<nav class="tab-nav">
+    <button class="tab-btn active" data-tab="goal">🎯 目標</button>
+    <button class="tab-btn" data-tab="problem">📅 今日の問題</button>
+    <button class="tab-btn" data-tab="review">📝 レビュー</button>
+    <button class="tab-btn" data-tab="stats">📊 進捗</button>
+</nav>
+
+<main>
+
+<!-- 🎯 目標タブ -->
+<section id="tab-goal" class="tab-panel active">
+    <div class="panel goal-panel">
+        <h2>学習目標</h2>
+        <label for="goalVision">目指す姿</label>
+        <textarea id="goalVision" rows="3" placeholder="例: Spring BootでWebアプリを1人で作れるバックエンドエンジニアになる"></textarea>
+
+        <label for="goalBuildTarget">作りたいもの</label>
+        <textarea id="goalBuildTarget" rows="2" placeholder="例: 家計簿管理アプリ、社内向けタスク管理ツール など"></textarea>
+
+        <div class="form-row">
+            <div>
+                <label for="goalDailyMinutes">1日の学習時間(分)</label>
+                <input type="number" id="goalDailyMinutes" min="1" placeholder="60">
+            </div>
+            <div>
+                <label for="goalStartDate">開始日</label>
+                <input type="date" id="goalStartDate">
+            </div>
+            <div>
+                <label for="goalTargetDate">達成目標日</label>
+                <input type="date" id="goalTargetDate">
+            </div>
+        </div>
+
+        <div class="actions">
+            <button id="saveGoalBtn">目標を保存する</button>
+            <span id="goalStatus" class="status"></span>
+        </div>
+        <div id="goalErrorBox" class="error-box" hidden></div>
+    </div>
+</section>
+
+<!-- 📅 今日の問題タブ -->
+<section id="tab-problem" class="tab-panel">
+    <div class="panel">
+        <div class="result-header">
+            <h2 id="problemTitle">今日の問題</h2>
+            <span id="problemDifficulty" class="difficulty-badge"></span>
+        </div>
+        <div id="problemLoading" class="status">読み込み中...</div>
+        <pre id="problemDescription" class="review-text" hidden></pre>
+        <span id="problemSolvedBadge" class="score-badge good" hidden>提出済み ✓</span>
+
+        <label for="problemCodeInput" style="margin-top:16px;">あなたの回答コード</label>
+        <textarea id="problemCodeInput" spellcheck="false" placeholder="ここに今日の問題への回答Javaコードを書いてください..."></textarea>
+
+        <div class="actions">
+            <button id="problemSubmitBtn">レビューを依頼する</button>
+            <span id="problemStatus" class="status"></span>
+        </div>
+        <div id="problemErrorBox" class="error-box" hidden></div>
+
+        <div id="problemResultBox" class="result-box" hidden>
+            <div class="result-header">
+                <h2>レビュー結果</h2>
+                <span id="problemScoreBadge" class="score-badge"></span>
+            </div>
+            <pre id="problemReviewText" class="review-text"></pre>
+        </div>
+    </div>
+</section>
+
+<!-- 📝 レビュータブ (既存機能) -->
+<section id="tab-review" class="tab-panel">
+    <div class="review-layout">
+        <div class="panel editor-panel">
+            <label for="codeInput">レビューしてほしいJavaコード</label>
+            <textarea id="codeInput" spellcheck="false" placeholder="ここにJavaのコードを貼り付けてください..."></textarea>
+
+            <div class="actions">
+                <button id="reviewBtn">レビューを依頼する</button>
+                <span id="status" class="status"></span>
+            </div>
+
+            <div id="errorBox" class="error-box" hidden></div>
+
+            <div id="resultBox" class="result-box" hidden>
+                <div class="result-header">
+                    <h2>レビュー結果</h2>
+                    <span id="scoreBadge" class="score-badge"></span>
+                </div>
+                <pre id="reviewText" class="review-text"></pre>
+            </div>
+        </div>
+
+        <aside class="panel history-panel">
+            <h2>履歴</h2>
+            <div id="historyList" class="history-list">
+                <p class="empty">まだレビュー履歴はありません</p>
+            </div>
+        </aside>
+    </div>
+</section>
+
+<!-- 📊 進捗タブ -->
+<section id="tab-stats" class="tab-panel">
+    <div class="panel">
+        <h2>達成状況</h2>
+        <div id="statsTiles" class="stats-tiles"></div>
+
+        <div class="chart-container">
+            <h3>スコア推移</h3>
+            <canvas id="scoreTrendChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <h3>日別の学習件数(直近30日)</h3>
+            <canvas id="activityChart"></canvas>
+        </div>
+    </div>
+</section>
+
+</main>
+
+<script src="nav.js"></script>
+<script src="goal.js"></script>
+<script src="review.js"></script>
+<script src="problem.js"></script>
+<script src="stats.js"></script>
+</body>
+</html>
