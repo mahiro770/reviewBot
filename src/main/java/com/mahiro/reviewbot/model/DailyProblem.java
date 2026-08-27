@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * 1日1問、Claudeが目標に合わせて生成するプログラミング問題。
+ * 1日1問、Geminiが目標に合わせて生成するプログラミング問題。
  */
 public class DailyProblem {
 

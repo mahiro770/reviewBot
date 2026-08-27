@@ -6,7 +6,7 @@ import com.mahiro.reviewbot.model.Goal;
 import com.mahiro.reviewbot.repository.GoalRepository;
 import com.mahiro.reviewbot.repository.ProblemRepository;
 import com.mahiro.reviewbot.repository.ReviewRepository;
-import com.mahiro.reviewbot.service.ClaudeProblemService;
+import com.mahiro.reviewbot.service.GeminiProblemService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Controller層: 今日の問題の取得(なければClaudeで生成)と、過去の問題一覧を扱う。
+ * Controller層: 今日の問題の取得(なければGeminiで生成)と、過去の問題一覧を扱う。
  */
 @RestController
 @RequestMapping("/api/problems")
@@ -26,17 +26,17 @@ public class ProblemController {
     private final ProblemRepository problemRepository;
     private final GoalRepository goalRepository;
     private final ReviewRepository reviewRepository;
-    private final ClaudeProblemService claudeProblemService;
+    private final GeminiProblemService geminiProblemService;
 
     public ProblemController(ProblemRepository problemRepository, GoalRepository goalRepository,
-                              ReviewRepository reviewRepository, ClaudeProblemService claudeProblemService) {
+                              ReviewRepository reviewRepository, GeminiProblemService geminiProblemService) {
         this.problemRepository = problemRepository;
         this.goalRepository = goalRepository;
         this.reviewRepository = reviewRepository;
-        this.claudeProblemService = claudeProblemService;
+        this.geminiProblemService = geminiProblemService;
     }
 
-    /** 今日の問題を取得する。まだ生成されていなければClaudeに生成してもらい保存する */
+    /** 今日の問題を取得する。まだ生成されていなければGeminiに生成してもらい保存する */
     @GetMapping("/today")
     public ResponseEntity<?> getTodayProblem() {
         try {
@@ -67,7 +67,7 @@ public class ProblemController {
         Goal goal = goalRepository.findLatest().orElse(null);
         List<String> recentTitles = problemRepository.findRecentTitles(10);
 
-        ClaudeProblemService.ProblemResult result = claudeProblemService.generateProblem(goal, recentTitles);
+        GeminiProblemService.ProblemResult result = geminiProblemService.generateProblem(goal, recentTitles);
 
         DailyProblem problem = new DailyProblem();
         problem.setProblemDate(today);

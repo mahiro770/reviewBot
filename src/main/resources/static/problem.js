@@ -16,7 +16,7 @@ let currentProblemId = null;
 async function loadTodayProblem() {
     clearError(problemErrorBox);
     problemLoading.hidden = false;
-    problemLoading.textContent = "今日の問題を用意しています(初回はClaudeが生成するので少し時間がかかります)...";
+    problemLoading.textContent = "今日の問題を用意しています(初回はGeminiが生成するので少し時間がかかります)...";
     problemDescription.hidden = true;
 
     try {
@@ -57,7 +57,7 @@ async function submitProblemAnswer() {
     }
 
     problemSubmitBtn.disabled = true;
-    problemStatus.textContent = "Claudeがレビュー中...";
+    problemStatus.textContent = "Geminiがレビュー中...";
 
     try {
         const data = await requestReview(code, currentProblemId);

@@ -5,7 +5,7 @@ import com.mahiro.reviewbot.dto.ReviewResponse;
 import com.mahiro.reviewbot.dto.ReviewSummary;
 import com.mahiro.reviewbot.model.CodeReview;
 import com.mahiro.reviewbot.repository.ReviewRepository;
-import com.mahiro.reviewbot.service.ClaudeReviewService;
+import com.mahiro.reviewbot.service.GeminiReviewService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,11 +21,11 @@ import java.util.Map;
 @RequestMapping("/api/reviews")
 public class ReviewController {
 
-    private final ClaudeReviewService claudeReviewService;
+    private final GeminiReviewService geminiReviewService;
     private final ReviewRepository reviewRepository;
 
-    public ReviewController(ClaudeReviewService claudeReviewService, ReviewRepository reviewRepository) {
-        this.claudeReviewService = claudeReviewService;
+    public ReviewController(GeminiReviewService geminiReviewService, ReviewRepository reviewRepository) {
+        this.geminiReviewService = geminiReviewService;
         this.reviewRepository = reviewRepository;
     }
 
@@ -33,7 +33,7 @@ public class ReviewController {
     @PostMapping
     public ResponseEntity<?> createReview(@RequestBody ReviewRequest request) {
         try {
-            ClaudeReviewService.ReviewResult result = claudeReviewService.reviewCode(request.getCode());
+            GeminiReviewService.ReviewResult result = geminiReviewService.reviewCode(request.getCode());
 
             CodeReview review = new CodeReview();
             review.setCode(request.getCode());

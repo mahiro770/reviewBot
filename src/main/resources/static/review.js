@@ -46,7 +46,7 @@ async function submitReview() {
     }
 
     reviewBtn.disabled = true;
-    statusEl.textContent = "Claudeがレビュー中...";
+    statusEl.textContent = "Geminiがレビュー中...";
 
     try {
         const data = await requestReview(code, null);

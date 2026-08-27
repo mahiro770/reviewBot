@@ -2,19 +2,17 @@ package com.mahiro.reviewbot.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-/** Claudeのレスポンス content 配列の1要素 (type: "text" のブロックだけ使う) */
+/** Gemini API の contents[].parts[] / candidates[].content.parts[] の1要素 */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ClaudeContentBlock {
+public class GeminiPart {
 
-    private String type;
     private String text;
 
-    public String getType() {
-        return type;
+    public GeminiPart() {
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public GeminiPart(String text) {
+        this.text = text;
     }
 
     public String getText() {
