@@ -7,13 +7,13 @@ Spring Boot + Gemini API で、Javaの学習を「目標設定 → 毎日の問�
 ```
 ブラウザ(静的HTML/JS、Chart.jsはCDN経由)
    ↓
-Controller (Goal / Problem / Review / Stats Controller)
+Controller (Goal / Level / Problem / Review / Stats Controller)
    ↓
 Service (GoalService, GeminiProblemService, GeminiReviewService, StatsService) --- Gemini API
    ↓
 Repository (GoalRepository, ProblemRepository, ReviewRepository / JdbcTemplate)
    ↓
-SQLite (review.db)
+SQLite (review.db) ← 起動時に SchemaMigrator が db/migration/V*.sql を適用
 ```
 
 Controller → Service → Repository → DB という、これまで学習してきた構成そのままで、
@@ -22,20 +22,21 @@ Controller → Service → Repository → DB という、これまで学習し�
 
 ## できること
 
-4つのタブで構成されています。
+4つのタブで構成されています。ヘッダーには常に「目標まであとN日」「🔥連続学習日数」
+「🥈Silver進捗」「🥇Gold進捗」が表示されます。
 
 - **🎯 目標**: 「目指す姿」「作りたいもの」「1日の学習時間」「達成目標日」を登録します。
-  ヘッダーに常に「目標まであとN日」が表示されます。
-- **📅 今日の問題**: その日初めて開いたときに、Geminiが目標に合わせたプログラミング問題を
-  1問自動生成します(2回目以降は同じ問題が表示され、再生成はされません)。回答コードを
-  提出するとそのままレビューされます。
+- **📚 問題集**: Java Silver / Gold(Oracle認定資格)の出題範囲に沿った全12レベル
+  (Silver 7 + Gold 5)から選んで、Geminiにその場で問題を生成してもらえます。
+  回答を提出すると、スコアに加えて「✅正解 / ❌不正解」も判定されます。
+  「⭐お気に入り」「❌間違えた問題」から横断的に見返すこともできます。
 - **📝 レビュー**: テキストエリアにJavaコードを貼り付けて「レビューを依頼する」を押すと、Geminiが
   バグの可能性・設計/可読性・Javaのベストプラクティス・良い点・次に学ぶと良いことをレビューし、
   100点満点のスコアを返します。右側の「履歴」から過去のレビューをいつでも見返せます。
 - **📊 進捗**: 総レビュー数・平均スコア・連続学習日数・目標までの残り日数と進捗率をタイル表示し、
   スコア推移(折れ線)と直近30日の学習件数(棒グラフ)をChart.jsで可視化します。
 
-レビュー結果・目標・出題した問題はすべてSQLiteに保存され、アプリを再起動しても保持されます。
+レビュー結果・目標・生成した問題はすべてSQLiteに保存され、アプリを再起動しても保持されます。
 
 ## 事前準備
 
@@ -84,9 +85,11 @@ Controller → Service → Repository → DB という、これまで学習し�
 
 4. ブラウザで `http://localhost:8080` を開く
 
-初回起動時に `review.db` というSQLiteファイルがプロジェクト直下に自動生成されます
-(schema.sqlが自動実行されます)。このファイルにレビュー履歴・目標・出題した問題が溜まっていきます。
-以前のバージョンから引き続き使う場合も、起動時に不足しているテーブル/カラムが自動追加されます。
+初回起動時に `review.db` というSQLiteファイルがプロジェクト直下に自動生成されます。
+起動のたびに `SchemaMigrator` が `src/main/resources/db/migration/V*.sql` を
+バージョン番号順に、まだ適用していないものだけ実行します(適用済みバージョンは
+`schema_version` テーブルに記録されます)。このファイルにレビュー履歴・目標・
+生成した問題が溜まっていきます。
 
 ## 使い方のコツ
 
@@ -95,8 +98,10 @@ Controller → Service → Repository → DB という、これまで学習し�
   (無料枠で使えるモデルの範囲で選んでください)。
 - レビューの観点(何を見てほしいか)は `GeminiReviewService` の `SYSTEM_PROMPT` を書き換えることで
   自由にカスタマイズできます。例えば「Spring Bootの設計原則も見てほしい」のように追記してみてください。
-- 今日の問題の出題傾向(テーマの選び方や難易度の書き方)は `GeminiProblemService` の `SYSTEM_PROMPT` で
-  カスタマイズできます。
+- 問題集の出題傾向(テーマの選び方や難易度の書き方)は `GeminiProblemService` の `SYSTEM_PROMPT` で
+  カスタマイズできます。レベルの一覧・出題範囲は `LevelCatalog` に固定リストとして定義されています。
+- スキーマを変更したい場合は `src/main/resources/db/migration/` に
+  `V2__xxx.sql` のような新しいファイルを追加してください(既存のV1は変更しない)。
 - 目標は常に最新の1件が「現在の目標」として扱われます(履歴管理はしていません)。目標タブで再保存すると
   新しい目標に上書きされます。
 - Gemini無料枠のレート制限(1分あたりのリクエスト数など)に達すると、レビュー/問題生成がエラーになる

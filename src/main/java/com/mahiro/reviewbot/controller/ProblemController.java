@@ -18,7 +18,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Controller層: 問題集(レベル別に生成するプログラミング問題)を扱う。
@@ -44,12 +47,9 @@ public class ProblemController {
     @GetMapping
     public ResponseEntity<?> listProblems(@RequestParam int levelId) {
         if (LevelCatalog.findById(levelId).isEmpty()) {
-            return ResponseEntity.badRequest().body(java.util.Map.of("error", "不正なレベルIDです。"));
+            return ResponseEntity.badRequest().body(Map.of("error", "不正なレベルIDです。"));
         }
-        List<ProblemResponse> problems = problemRepository.findByLevelId(levelId).stream()
-                .map(this::toResponse)
-                .toList();
-        return ResponseEntity.ok(problems);
+        return ResponseEntity.ok(toResponses(problemRepository.findByLevelId(levelId)));
     }
 
     /** 指定レベルの新しい問題をGeminiに生成してもらい保存する */
@@ -72,15 +72,15 @@ public class ProblemController {
             problem.setCreatedAt(LocalDateTime.now());
 
             Problem saved = problemRepository.save(problem);
-            return ResponseEntity.ok(toResponse(saved));
+            return ResponseEntity.ok(ProblemResponse.from(saved, false, null));
 
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(java.util.Map.of("error", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(java.util.Map.of("error", "問題の生成中にエラーが発生しました: " + e.getMessage()));
+                    .body(Map.of("error", "問題の生成中にエラーが発生しました: " + e.getMessage()));
         }
     }
 
@@ -98,26 +98,37 @@ public class ProblemController {
     /** お気に入り一覧 */
     @GetMapping("/favorites")
     public List<ProblemResponse> listFavorites() {
-        return problemRepository.findFavorites().stream()
-                .map(this::toResponse)
-                .toList();
+        return toResponses(problemRepository.findFavorites());
     }
 
     /** 直近の提出が「不正解」判定だった問題の一覧 */
     @GetMapping("/mistakes")
     public List<ProblemResponse> listMistakes() {
-        return problemRepository.findAll().stream()
-                .map(problem -> toResponse(problem))
+        return toResponses(problemRepository.findAll()).stream()
                 .filter(res -> Boolean.FALSE.equals(res.getCorrect()))
                 .toList();
     }
 
+    /** 複数の問題を、そのレビュー(正誤・提出済みか)込みでまとめてDTOに変換する(N+1回避) */
+    private List<ProblemResponse> toResponses(List<Problem> problems) {
+        List<Long> ids = problems.stream().map(Problem::getId).toList();
+        Map<Long, List<CodeReview>> attemptsByProblemId = reviewRepository.findByProblemIds(ids).stream()
+                .collect(Collectors.groupingBy(CodeReview::getProblemId));
+
+        return problems.stream()
+                .map(problem -> toResponse(problem, attemptsByProblemId.getOrDefault(problem.getId(), List.of())))
+                .toList();
+    }
+
     private ProblemResponse toResponse(Problem problem) {
-        List<CodeReview> attempts = reviewRepository.findByProblemIdOrderByCreatedAtDesc(problem.getId());
+        return toResponse(problem, reviewRepository.findByProblemIdOrderByCreatedAtDesc(problem.getId()));
+    }
+
+    private ProblemResponse toResponse(Problem problem, List<CodeReview> attempts) {
         boolean attempted = !attempts.isEmpty();
         Boolean correct = attempts.stream()
                 .map(CodeReview::getIsCorrect)
-                .filter(java.util.Objects::nonNull)
+                .filter(Objects::nonNull)
                 .findFirst()
                 .orElse(null);
         return ProblemResponse.from(problem, attempted, correct);

@@ -84,6 +84,20 @@ public class ReviewRepository {
         return jdbcTemplate.query(sql, this::mapRow, problemId);
     }
 
+    /**
+     * 複数の問題への提出レビューを新しい順(id DESC)にまとめて返す。
+     * 問題一覧の表示で1件ずつ問い合わせるN+1を避けるために使う。
+     */
+    public List<CodeReview> findByProblemIds(List<Long> problemIds) {
+        if (problemIds.isEmpty()) {
+            return List.of();
+        }
+        String placeholders = problemIds.stream().map(id -> "?").collect(java.util.stream.Collectors.joining(","));
+        String sql = "SELECT id, code, review, score, created_at, problem_id, is_correct FROM code_reviews "
+                + "WHERE problem_id IN (" + placeholders + ") ORDER BY id DESC";
+        return jdbcTemplate.query(sql, this::mapRow, problemIds.toArray());
+    }
+
     private CodeReview mapRow(java.sql.ResultSet rs, int rowNum) throws java.sql.SQLException {
         CodeReview review = new CodeReview();
         review.setId(rs.getLong("id"));
