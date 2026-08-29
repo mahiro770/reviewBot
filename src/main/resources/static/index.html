@@ -9,7 +9,7 @@
 </head>
 <body>
 <header>
-    <h1>☕ Java学習システム</h1>
+    <h1>Java学習システム</h1>
     <p class="subtitle">Spring Boot × Gemini API ― 目標設定・レベル別問題・AIレビュー・進捗可視化で学習を続けるためのツール</p>
     <div class="header-widgets">
         <div id="goalWidget" class="goal-widget" hidden></div>
@@ -20,15 +20,15 @@
 </header>
 
 <nav class="tab-nav">
-    <button class="tab-btn active" data-tab="goal">🎯 目標</button>
-    <button class="tab-btn" data-tab="problem">📚 問題集</button>
-    <button class="tab-btn" data-tab="review">📝 レビュー</button>
-    <button class="tab-btn" data-tab="stats">📊 進捗</button>
+    <button class="tab-btn active" data-tab="goal"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg> 目標</button>
+    <button class="tab-btn" data-tab="problem"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1.5"/><line x1="12" y1="4" x2="12" y2="20"/></svg> 問題集</button>
+    <button class="tab-btn" data-tab="review"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="6"/><line x1="14.5" y1="14.5" x2="20" y2="20"/></svg> レビュー</button>
+    <button class="tab-btn" data-tab="stats"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="20" x2="5" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="19" y1="20" x2="19" y2="15"/></svg> 進捗</button>
 </nav>
 
 <main>
 
-<!-- 🎯 目標タブ -->
+<!-- 目標タブ -->
 <section id="tab-goal" class="tab-panel active">
     <div class="panel goal-panel">
         <h2>学習目標</h2>
@@ -61,20 +61,20 @@
     </div>
 </section>
 
-<!-- 📚 問題集タブ -->
+<!-- 問題集タブ -->
 <section id="tab-problem" class="tab-panel">
 
     <nav class="lib-nav">
         <button class="lib-tab active" data-lib="levels">レベル一覧</button>
-        <button class="lib-tab" data-lib="favorites">⭐ お気に入り</button>
-        <button class="lib-tab" data-lib="mistakes">❌ 間違えた問題</button>
+        <button class="lib-tab" data-lib="favorites"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> お気に入り</button>
+        <button class="lib-tab" data-lib="mistakes"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg> 間違えた問題</button>
     </nav>
 
     <!-- レベル一覧ビュー -->
     <div id="libLevels" class="lib-view panel">
-        <h3>🥈 Java Silver 範囲</h3>
+        <h3><svg class="icon silver-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"/><polyline points="8.5 12.5 7 21 12 18 17 21 15.5 12.5"/></svg> Java Silver 範囲</h3>
         <div id="silverLevelGrid" class="level-grid"></div>
-        <h3>🥇 Java Gold 範囲</h3>
+        <h3><svg class="icon gold-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"/><polyline points="8.5 12.5 7 21 12 18 17 21 15.5 12.5"/></svg> Java Gold 範囲</h3>
         <div id="goldLevelGrid" class="level-grid"></div>
     </div>
 
@@ -93,7 +93,7 @@
         <button class="link-btn" id="backToLevelsBtn">← レベル一覧へ戻る</button>
         <div class="result-header">
             <h2 id="problemListTitle">レベル</h2>
-            <button id="generateProblemBtn">🔄 新しい問題を生成する</button>
+            <button id="generateProblemBtn"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><polyline points="18 3 18 7 14 7"/><polyline points="6 21 6 17 10 17"/></svg> 新しい問題を生成する</button>
         </div>
         <div id="problemListStatus" class="status"></div>
         <div id="problemListErrorBox" class="error-box" hidden></div>
@@ -108,7 +108,7 @@
             <h2 id="problemTitle">問題</h2>
             <div>
                 <span id="problemDifficulty" class="difficulty-badge"></span>
-                <button id="problemFavoriteBtn" class="favorite-btn" title="お気に入り">☆</button>
+                <button id="problemFavoriteBtn" class="favorite-btn" title="お気に入り"><svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
             </div>
         </div>
         <pre id="problemDescription" class="review-text"></pre>
@@ -136,7 +136,7 @@
     </div>
 </section>
 
-<!-- 📝 レビュータブ (既存機能) -->
+<!-- レビュータブ (既存機能) -->
 <section id="tab-review" class="tab-panel">
     <div class="review-layout">
         <div class="panel editor-panel">
@@ -169,7 +169,7 @@
     </div>
 </section>
 
-<!-- 📊 進捗タブ -->
+<!-- 進捗タブ -->
 <section id="tab-stats" class="tab-panel">
     <div class="panel">
         <h2>達成状況</h2>
@@ -189,6 +189,7 @@
 
 </main>
 
+<script src="icons.js"></script>
 <script src="nav.js"></script>
 <script src="header.js"></script>
 <script src="goal.js"></script>

@@ -28,7 +28,9 @@ function renderJudgementBadge(el, isCorrect) {
     }
     el.hidden = false;
     el.className = "score-badge " + (isCorrect ? "good" : "bad");
-    el.textContent = isCorrect ? "✅ 正解" : "❌ 不正解";
+    el.innerHTML = isCorrect
+        ? `${iconSvg("check-circle", { className: "icon-sm" })} 正解`
+        : `${iconSvg("x-circle", { className: "icon-sm" })} 不正解`;
 }
 
 /** コードをレビューAPIに送信する共通関数。問題集タブからも problemId 付きで呼ばれる */
@@ -78,7 +80,8 @@ async function submitReview() {
 function renderHistoryItem(item) {
     const div = document.createElement("div");
     div.className = "history-item";
-    const judgementIcon = item.isCorrect === true ? "✅ " : item.isCorrect === false ? "❌ " : "";
+    const judgementIcon = item.isCorrect === true ? iconSvg("check-circle", { className: "icon-sm status-good-icon" }) + " "
+        : item.isCorrect === false ? iconSvg("x-circle", { className: "icon-sm status-bad-icon" }) + " " : "";
     div.innerHTML = `
         <div class="meta">
             <span>${judgementIcon}${item.score !== null && item.score !== undefined ? item.score + "点" : "-"}</span>

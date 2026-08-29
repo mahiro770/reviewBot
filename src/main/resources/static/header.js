@@ -9,14 +9,14 @@ async function refreshHeaderStats() {
         const stats = await res.json();
 
         streakWidget.hidden = false;
-        streakWidget.textContent = `🔥 連続学習 ${stats.streakDays} 日`;
+        streakWidget.innerHTML = `${iconSvg("trending-up")} 連続学習 ${stats.streakDays} 日`;
 
         silverBadge.hidden = false;
-        silverBadge.textContent = `🥈 Silver ${stats.silverCleared}/${stats.silverTotal}`;
+        silverBadge.innerHTML = `${iconSvg("award", { className: "silver-icon" })} Silver ${stats.silverCleared}/${stats.silverTotal}`;
         silverBadge.classList.toggle("cert-complete", stats.silverCleared >= stats.silverTotal && stats.silverTotal > 0);
 
         goldBadge.hidden = false;
-        goldBadge.textContent = `🥇 Gold ${stats.goldCleared}/${stats.goldTotal}`;
+        goldBadge.innerHTML = `${iconSvg("award", { className: "gold-icon" })} Gold ${stats.goldCleared}/${stats.goldTotal}`;
         goldBadge.classList.toggle("cert-complete", stats.goldCleared >= stats.goldTotal && stats.goldTotal > 0);
     } catch (e) {
         // ヘッダーの補助表示なので、失敗しても他の機能は継続させる

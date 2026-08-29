@@ -65,16 +65,23 @@ libTabs.forEach(tab => {
 function renderProblemCard(problem, container, showLevel, originView) {
     const card = document.createElement("div");
     card.className = "problem-card";
-    let statusIcon = "🆕 未回答";
+    let statusLabel = '<span class="status-label">未回答</span>';
     if (problem.attempted) {
-        statusIcon = problem.correct === true ? "✅ 正解済み" : problem.correct === false ? "❌ 不正解" : "📝 提出済み";
+        if (problem.correct === true) {
+            statusLabel = `<span class="status-label status-good">${iconSvg("check-circle", { className: "icon-sm" })} 正解済み</span>`;
+        } else if (problem.correct === false) {
+            statusLabel = `<span class="status-label status-bad">${iconSvg("x-circle", { className: "icon-sm" })} 不正解</span>`;
+        } else {
+            statusLabel = '<span class="status-label">提出済み</span>';
+        }
     }
+    const favoriteMark = problem.favorite ? iconSvg("star", { filled: true, className: "icon-sm gold-icon" }) + " " : "";
     card.innerHTML = `
-        <div class="problem-card-title">${problem.favorite ? "⭐ " : ""}${problem.title}</div>
+        <div class="problem-card-title">${favoriteMark}${problem.title}</div>
         <div class="problem-card-meta">
             ${showLevel ? `<span>${problem.levelTitle}</span>` : ""}
             <span>${problem.difficulty || ""}</span>
-            <span>${statusIcon}</span>
+            ${statusLabel}
         </div>
     `;
     card.addEventListener("click", () => {
@@ -94,8 +101,9 @@ async function loadLevels() {
         levels.forEach(level => {
             const card = document.createElement("div");
             card.className = "level-card" + (level.cleared ? " level-cleared" : "");
+            const clearedMark = level.cleared ? iconSvg("check-circle", { className: "icon-sm status-good-icon" }) + " " : "";
             card.innerHTML = `
-                <div class="level-card-title">${level.cleared ? "✅ " : ""}Lv.${level.id} ${level.title}</div>
+                <div class="level-card-title">${clearedMark}Lv.${level.id} ${level.title}</div>
                 <div class="problem-card-meta"><span>正解 ${level.correctCount}/${level.requiredCorrectCount}</span></div>
             `;
             card.addEventListener("click", () => openLevel(level.id, level.title));
@@ -241,6 +249,12 @@ async function loadMoreMistakes() {
     }
 }
 
+/** お気に入りボタンの見た目(星の塗りつぶし)を更新する */
+function setFavoriteButtonState(favorite) {
+    problemFavoriteBtn.innerHTML = iconSvg("star", { filled: favorite, className: "icon-lg" });
+    problemFavoriteBtn.classList.toggle("favorited", favorite);
+}
+
 function openProblemDetail(problem) {
     state.currentProblem = problem;
     if (problem.levelId) state.currentLevelId = problem.levelId;
@@ -249,11 +263,10 @@ function openProblemDetail(problem) {
     problemResultBox.hidden = true;
     problemCodeInput.value = "";
 
-    problemTitle.textContent = `📘 ${problem.title}`;
+    problemTitle.textContent = problem.title;
     problemDifficulty.textContent = problem.difficulty || "";
     problemDescription.textContent = problem.description;
-    problemFavoriteBtn.textContent = problem.favorite ? "★" : "☆";
-    problemFavoriteBtn.classList.toggle("favorited", problem.favorite);
+    setFavoriteButtonState(problem.favorite);
 
     if (problem.attempted && problem.correct !== null && problem.correct !== undefined) {
         renderJudgementBadge(problemCorrectBadge, problem.correct);
@@ -276,8 +289,7 @@ async function toggleFavorite() {
         const data = await res.json();
         if (res.ok) {
             state.currentProblem = data;
-            problemFavoriteBtn.textContent = data.favorite ? "★" : "☆";
-            problemFavoriteBtn.classList.toggle("favorited", data.favorite);
+            setFavoriteButtonState(data.favorite);
         }
     } catch (e) {
         // お気に入り切替の失敗は致命的ではないため、静かに無視する

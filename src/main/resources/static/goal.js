@@ -25,7 +25,7 @@ function renderGoalWidget(goal) {
     if (goal.progressPercent !== null && goal.progressPercent !== undefined) {
         parts.push(`進捗 ${goal.progressPercent}%`);
     }
-    goalWidget.textContent = parts.length ? `🎯 ${parts.join(" / ")}` : "";
+    goalWidget.innerHTML = parts.length ? `${iconSvg("target")} ${parts.join(" / ")}` : "";
     goalWidget.hidden = parts.length === 0;
 }
 
