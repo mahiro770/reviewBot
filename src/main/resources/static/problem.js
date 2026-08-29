@@ -1,44 +1,224 @@
+// ---- レベル一覧ビュー ----
+const silverLevelGrid = document.getElementById("silverLevelGrid");
+const goldLevelGrid = document.getElementById("goldLevelGrid");
+const favoritesList = document.getElementById("favoritesList");
+const mistakesList = document.getElementById("mistakesList");
+
+// ---- 問題一覧ビュー ----
+const backToLevelsBtn = document.getElementById("backToLevelsBtn");
+const problemListTitle = document.getElementById("problemListTitle");
+const generateProblemBtn = document.getElementById("generateProblemBtn");
+const problemListStatus = document.getElementById("problemListStatus");
+const problemListErrorBox = document.getElementById("problemListErrorBox");
+const problemListCards = document.getElementById("problemListCards");
+
+// ---- 問題詳細/回答ビュー ----
+const backToProblemListBtn = document.getElementById("backToProblemListBtn");
 const problemTitle = document.getElementById("problemTitle");
 const problemDifficulty = document.getElementById("problemDifficulty");
-const problemLoading = document.getElementById("problemLoading");
+const problemFavoriteBtn = document.getElementById("problemFavoriteBtn");
 const problemDescription = document.getElementById("problemDescription");
-const problemSolvedBadge = document.getElementById("problemSolvedBadge");
+const problemCorrectBadge = document.getElementById("problemCorrectBadge");
 const problemCodeInput = document.getElementById("problemCodeInput");
 const problemSubmitBtn = document.getElementById("problemSubmitBtn");
 const problemStatus = document.getElementById("problemStatus");
 const problemErrorBox = document.getElementById("problemErrorBox");
 const problemResultBox = document.getElementById("problemResultBox");
+const problemJudgementBadge = document.getElementById("problemJudgementBadge");
 const problemScoreBadge = document.getElementById("problemScoreBadge");
 const problemReviewText = document.getElementById("problemReviewText");
 
-let currentProblemId = null;
+const libViews = { levels: document.getElementById("libLevels"), favorites: document.getElementById("libFavorites"),
+    mistakes: document.getElementById("libMistakes"), problemList: document.getElementById("libProblemList"),
+    problemDetail: document.getElementById("libProblemDetail") };
+const libTabs = document.querySelectorAll(".lib-tab");
 
-async function loadTodayProblem() {
-    clearError(problemErrorBox);
-    problemLoading.hidden = false;
-    problemLoading.textContent = "今日の問題を用意しています(初回はGeminiが生成するので少し時間がかかります)...";
-    problemDescription.hidden = true;
+let currentLevelId = null;
+let currentProblem = null;
+let detailBackView = "levels";
 
+function showLibView(name) {
+    Object.values(libViews).forEach(v => { v.hidden = true; });
+    libViews[name].hidden = false;
+    libTabs.forEach(tab => tab.classList.toggle("active", tab.dataset.lib === name));
+}
+
+libTabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+        showLibView(tab.dataset.lib);
+        if (tab.dataset.lib === "favorites") loadFavorites();
+        if (tab.dataset.lib === "mistakes") loadMistakes();
+    });
+});
+
+function certLabel(cert) {
+    return cert === "SILVER" ? "🥈 Silver" : "🥇 Gold";
+}
+
+async function loadLevels() {
     try {
-        const res = await fetch("/api/problems/today");
-        const data = await res.json();
+        const res = await fetch("/api/levels");
+        const levels = await res.json();
 
-        if (!res.ok) {
-            showError(problemErrorBox, data.error || "問題の取得に失敗しました。");
-            problemLoading.hidden = true;
+        silverLevelGrid.innerHTML = "";
+        goldLevelGrid.innerHTML = "";
+        levels.forEach(level => {
+            const card = document.createElement("div");
+            card.className = "level-card" + (level.cleared ? " level-cleared" : "");
+            card.innerHTML = `
+                <div class="level-card-title">${level.cleared ? "✅ " : ""}Lv.${level.id} ${level.title}</div>
+            `;
+            card.addEventListener("click", () => openLevel(level.id, level.title));
+            (level.certification === "SILVER" ? silverLevelGrid : goldLevelGrid).appendChild(card);
+        });
+    } catch (e) {
+        silverLevelGrid.innerHTML = `<p class="empty">レベル一覧の取得に失敗しました: ${e.message}</p>`;
+    }
+}
+
+function renderProblemCard(problem, container, showLevel, originView) {
+    const card = document.createElement("div");
+    card.className = "problem-card";
+    let statusIcon = "🆕 未回答";
+    if (problem.attempted) {
+        statusIcon = problem.correct === true ? "✅ 正解済み" : problem.correct === false ? "❌ 不正解" : "📝 提出済み";
+    }
+    card.innerHTML = `
+        <div class="problem-card-title">${problem.favorite ? "⭐ " : ""}${problem.title}</div>
+        <div class="problem-card-meta">
+            ${showLevel ? `<span>${problem.levelTitle}</span>` : ""}
+            <span>${problem.difficulty || ""}</span>
+            <span>${statusIcon}</span>
+        </div>
+    `;
+    card.addEventListener("click", () => {
+        detailBackView = originView;
+        openProblemDetail(problem);
+    });
+    container.appendChild(card);
+}
+
+async function openLevel(levelId, levelTitle) {
+    currentLevelId = levelId;
+    detailBackView = "problemList";
+    problemListTitle.textContent = `Lv.${levelId} ${levelTitle}`;
+    showLibView("problemList");
+    await loadProblemsForLevel(levelId);
+}
+
+async function loadProblemsForLevel(levelId) {
+    clearError(problemListErrorBox);
+    problemListCards.innerHTML = "";
+    try {
+        const res = await fetch(`/api/problems?levelId=${levelId}`);
+        const problems = await res.json();
+        if (!problems.length) {
+            problemListCards.innerHTML = '<p class="empty">まだ問題がありません。「新しい問題を生成する」を押してください</p>';
             return;
         }
-
-        currentProblemId = data.id;
-        problemTitle.textContent = `📅 ${data.title}`;
-        problemDifficulty.textContent = data.difficulty || "";
-        problemDescription.textContent = data.description;
-        problemDescription.hidden = false;
-        problemSolvedBadge.hidden = !data.solved;
-        problemLoading.hidden = true;
+        problems.forEach(p => renderProblemCard(p, problemListCards, false, "problemList"));
     } catch (e) {
-        showError(problemErrorBox, "通信エラーが発生しました: " + e.message);
-        problemLoading.hidden = true;
+        showError(problemListErrorBox, "問題一覧の取得に失敗しました: " + e.message);
+    }
+}
+
+async function generateProblem() {
+    clearError(problemListErrorBox);
+    generateProblemBtn.disabled = true;
+    problemListStatus.textContent = "Geminiが問題を生成中...";
+
+    try {
+        const res = await fetch("/api/problems/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ levelId: currentLevelId })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            showError(problemListErrorBox, data.error || "問題の生成に失敗しました。");
+            return;
+        }
+        detailBackView = "problemList";
+        openProblemDetail(data);
+        await loadProblemsForLevel(currentLevelId);
+    } catch (e) {
+        showError(problemListErrorBox, "通信エラーが発生しました: " + e.message);
+    } finally {
+        generateProblemBtn.disabled = false;
+        problemListStatus.textContent = "";
+    }
+}
+
+async function loadFavorites() {
+    favoritesList.innerHTML = "";
+    try {
+        const res = await fetch("/api/problems/favorites");
+        const problems = await res.json();
+        if (!problems.length) {
+            favoritesList.innerHTML = '<p class="empty">お気に入り登録した問題はまだありません</p>';
+            return;
+        }
+        problems.forEach(p => renderProblemCard(p, favoritesList, true, "favorites"));
+    } catch (e) {
+        favoritesList.innerHTML = `<p class="empty">取得に失敗しました: ${e.message}</p>`;
+    }
+}
+
+async function loadMistakes() {
+    mistakesList.innerHTML = "";
+    try {
+        const res = await fetch("/api/problems/mistakes");
+        const problems = await res.json();
+        if (!problems.length) {
+            mistakesList.innerHTML = '<p class="empty">間違えた問題はまだありません</p>';
+            return;
+        }
+        problems.forEach(p => renderProblemCard(p, mistakesList, true, "mistakes"));
+    } catch (e) {
+        mistakesList.innerHTML = `<p class="empty">取得に失敗しました: ${e.message}</p>`;
+    }
+}
+
+function openProblemDetail(problem) {
+    currentProblem = problem;
+    if (problem.levelId) currentLevelId = problem.levelId;
+
+    clearError(problemErrorBox);
+    problemResultBox.hidden = true;
+    problemCodeInput.value = "";
+
+    problemTitle.textContent = `📘 ${problem.title}`;
+    problemDifficulty.textContent = problem.difficulty || "";
+    problemDescription.textContent = problem.description;
+    problemFavoriteBtn.textContent = problem.favorite ? "★" : "☆";
+    problemFavoriteBtn.classList.toggle("favorited", problem.favorite);
+
+    if (problem.attempted && problem.correct !== null && problem.correct !== undefined) {
+        renderJudgementBadge(problemCorrectBadge, problem.correct);
+    } else {
+        problemCorrectBadge.hidden = true;
+    }
+
+    showLibView("problemDetail");
+}
+
+async function toggleFavorite() {
+    if (!currentProblem) return;
+    const newValue = !currentProblem.favorite;
+    try {
+        const res = await fetch(`/api/problems/${currentProblem.id}/favorite`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ favorite: newValue })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            currentProblem = data;
+            problemFavoriteBtn.textContent = data.favorite ? "★" : "☆";
+            problemFavoriteBtn.classList.toggle("favorited", data.favorite);
+        }
+    } catch (e) {
+        // お気に入り切替の失敗は致命的ではないため、静かに無視する
     }
 }
 
@@ -51,8 +231,8 @@ async function submitProblemAnswer() {
         showError(problemErrorBox, "コードを入力してください。");
         return;
     }
-    if (!currentProblemId) {
-        showError(problemErrorBox, "問題がまだ読み込まれていません。");
+    if (!currentProblem) {
+        showError(problemErrorBox, "問題が選択されていません。");
         return;
     }
 
@@ -60,9 +240,13 @@ async function submitProblemAnswer() {
     problemStatus.textContent = "Geminiがレビュー中...";
 
     try {
-        const data = await requestReview(code, currentProblemId);
+        const data = await requestReview(code, currentProblem.id);
         renderReviewResult(data, problemResultBox, problemScoreBadge, problemReviewText);
-        problemSolvedBadge.hidden = false;
+        renderJudgementBadge(problemJudgementBadge, data.isCorrect);
+        renderJudgementBadge(problemCorrectBadge, data.isCorrect);
+        currentProblem.attempted = true;
+        currentProblem.correct = data.isCorrect;
+        refreshHeaderStats();
     } catch (e) {
         showError(problemErrorBox, e.message);
     } finally {
@@ -71,6 +255,10 @@ async function submitProblemAnswer() {
     }
 }
 
+backToLevelsBtn.addEventListener("click", () => showLibView("levels"));
+backToProblemListBtn.addEventListener("click", () => showLibView(detailBackView));
+generateProblemBtn.addEventListener("click", generateProblem);
+problemFavoriteBtn.addEventListener("click", toggleFavorite);
 problemSubmitBtn.addEventListener("click", submitProblemAnswer);
 
 problemCodeInput.addEventListener("keydown", (e) => {
@@ -79,4 +267,4 @@ problemCodeInput.addEventListener("keydown", (e) => {
     }
 });
 
-loadTodayProblem();
+loadLevels();

@@ -5,6 +5,7 @@ import com.mahiro.reviewbot.dto.GeminiGenerationConfig;
 import com.mahiro.reviewbot.dto.GeminiRequest;
 import com.mahiro.reviewbot.dto.GeminiResponse;
 import com.mahiro.reviewbot.model.Goal;
+import com.mahiro.reviewbot.model.Level;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -17,24 +18,23 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Gemini(Google Generative Language API)を呼び出して、学習目標に沿った
- * 今日のプログラミング問題を1問生成するサービス。
+ * Gemini(Google Generative Language API)を呼び出して、指定レベルのカリキュラムに沿った
+ * プログラミング問題を1問生成するサービス。
  */
 @Service
 public class GeminiProblemService {
 
     private static final String SYSTEM_PROMPT = """
-            あなたは経験豊富なJavaメンターです。未経験からITエンジニアに転向し、
-            現在Java/Spring Bootを学習中のエンジニアに、今日1問だけ解いてもらう
-            プログラミング問題を作成してください。
+            あなたは経験豊富なJavaメンターです。Java Silver / Gold(Oracle認定資格)の
+            学習に取り組んでいるエンジニアに、指定されたレベルのテーマに沿った
+            プログラミング問題を1問作成してください。
 
             以下の条件を守ってください。
-            - 学習者の目標・作りたいもの・1日の学習時間に合った、実践的で面白いテーマにする
+            - 指定された「このレベルのテーマ」の範囲内の問題にする(範囲外の文法・APIを問わない)
             - 直近に出題した問題とテーマ・内容が重複しないようにする
-            - 1日の学習時間内(目安)で解ける粒度にする(長すぎる大作にしない)
+            - 短時間(目安15〜30分)で解ける粒度にする(長すぎる大作にしない)
             - 問題文には、要件・入出力の例を明確に書く
-            - 学習目標や1日の学習時間が指定されていない場合は、Javaの基礎力を伸ばす
-              一般的な問題にする
+            - 学習者の目標(分かっていれば)を、テーマを損なわない範囲で味付けとして活かしてよい
 
             出力は必ず次の形式のみで、日本語で書いてください(他の文字列を前後に含めない):
             タイトル: (問題の短いタイトル)
@@ -67,14 +67,14 @@ public class GeminiProblemService {
     public record ProblemResult(String title, String difficulty, String description) {
     }
 
-    public ProblemResult generateProblem(Goal goal, List<String> recentTitles) {
+    public ProblemResult generateProblem(Level level, Goal goal, List<String> recentTitles) {
         if (apiKey == null || apiKey.isBlank()) {
             throw new IllegalStateException(
                     "GEMINI_API_KEY が設定されていません。環境変数にAPIキーを設定して起動し直してください。");
         }
 
         GeminiRequest request = new GeminiRequest(
-                List.of(GeminiContent.ofText("user", buildUserMessage(goal, recentTitles))),
+                List.of(GeminiContent.ofText("user", buildUserMessage(level, goal, recentTitles))),
                 GeminiContent.ofText(null, SYSTEM_PROMPT),
                 new GeminiGenerationConfig(maxTokens)
         );
@@ -108,27 +108,27 @@ public class GeminiProblemService {
                 .reduce("", String::concat);
     }
 
-    private String buildUserMessage(Goal goal, List<String> recentTitles) {
+    private String buildUserMessage(Level level, Goal goal, List<String> recentTitles) {
         StringBuilder sb = new StringBuilder();
+        sb.append("## レベル\n");
+        sb.append("レベル").append(level.id()).append(": ").append(level.title())
+                .append("(Java ").append(level.certification().equals("SILVER") ? "Silver" : "Gold").append(" 範囲)\n");
+        sb.append("このレベルのテーマ: ").append(level.topicHint()).append("\n");
+
         if (goal != null) {
-            sb.append("## 学習目標\n");
+            sb.append("\n## 学習者の目標(参考、テーマ範囲を優先すること)\n");
             sb.append("目指す姿: ").append(goal.getTargetVision()).append("\n");
             if (goal.getBuildTarget() != null && !goal.getBuildTarget().isBlank()) {
                 sb.append("作りたいもの: ").append(goal.getBuildTarget()).append("\n");
             }
-            if (goal.getDailyMinutes() != null) {
-                sb.append("1日の学習時間: ").append(goal.getDailyMinutes()).append("分\n");
-            }
-        } else {
-            sb.append("まだ目標は設定されていません。Java全般の基礎力を伸ばす問題にしてください。\n");
         }
 
         if (recentTitles != null && !recentTitles.isEmpty()) {
-            sb.append("\n## 直近に出題済みの問題タイトル(これらと重複しないテーマにする)\n");
+            sb.append("\n## このレベルで直近に出題済みの問題タイトル(これらと重複しないテーマにする)\n");
             recentTitles.forEach(title -> sb.append("- ").append(title).append("\n"));
         }
 
-        sb.append("\n今日の問題を1問作成してください。");
+        sb.append("\nこのレベルの問題を1問作成してください。");
         return sb.toString();
     }
 
@@ -150,7 +150,7 @@ public class GeminiProblemService {
                 : text.trim();
 
         Matcher titleMatcher = TITLE_PATTERN.matcher(header);
-        String title = titleMatcher.find() ? titleMatcher.group(1).trim() : "今日の問題";
+        String title = titleMatcher.find() ? titleMatcher.group(1).trim() : "問題";
 
         Matcher difficultyMatcher = DIFFICULTY_PATTERN.matcher(header);
         String difficulty = difficultyMatcher.find() ? difficultyMatcher.group(1).trim() : null;

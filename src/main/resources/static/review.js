@@ -17,6 +17,17 @@ function renderReviewResult(data, resultBoxEl, scoreBadgeEl, reviewTextEl) {
     reviewTextEl.textContent = data.review;
 }
 
+/** 問題に紐づくレビューの正誤判定バッジを描画する(isCorrectがnullの場合は非表示のまま) */
+function renderJudgementBadge(el, isCorrect) {
+    if (isCorrect === null || isCorrect === undefined) {
+        el.hidden = true;
+        return;
+    }
+    el.hidden = false;
+    el.className = "score-badge " + (isCorrect ? "good" : "bad");
+    el.textContent = isCorrect ? "✅ 正解" : "❌ 不正解";
+}
+
 /** コードをレビューAPIに送信する共通関数。今日の問題タブからも problemId 付きで呼ばれる */
 async function requestReview(code, problemId) {
     const res = await fetch("/api/reviews", {
@@ -52,6 +63,7 @@ async function submitReview() {
         const data = await requestReview(code, null);
         renderResult(data);
         await loadHistory();
+        refreshHeaderStats();
     } catch (e) {
         showError(errorBox, e.message || ("通信エラーが発生しました: " + e.message));
     } finally {
@@ -74,9 +86,10 @@ async function loadHistory() {
         items.forEach(item => {
             const div = document.createElement("div");
             div.className = "history-item";
+            const judgementIcon = item.isCorrect === true ? "✅ " : item.isCorrect === false ? "❌ " : "";
             div.innerHTML = `
                 <div class="meta">
-                    <span>${item.score !== null && item.score !== undefined ? item.score + "点" : "-"}</span>
+                    <span>${judgementIcon}${item.score !== null && item.score !== undefined ? item.score + "点" : "-"}</span>
                     <span>${formatDate(item.createdAt)}</span>
                 </div>
                 <div class="code-preview"></div>

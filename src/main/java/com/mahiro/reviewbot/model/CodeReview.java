@@ -14,6 +14,7 @@ public class CodeReview {
     private Integer score;
     private LocalDateTime createdAt;
     private Long problemId;
+    private Boolean isCorrect;
 
     public CodeReview() {
     }
@@ -72,5 +73,13 @@ public class CodeReview {
 
     public void setProblemId(Long problemId) {
         this.problemId = problemId;
+    }
+
+    public Boolean getIsCorrect() {
+        return isCorrect;
+    }
+
+    public void setIsCorrect(Boolean isCorrect) {
+        this.isCorrect = isCorrect;
     }
 }

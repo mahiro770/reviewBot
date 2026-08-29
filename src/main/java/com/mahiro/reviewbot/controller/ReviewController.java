@@ -4,6 +4,8 @@ import com.mahiro.reviewbot.dto.ReviewRequest;
 import com.mahiro.reviewbot.dto.ReviewResponse;
 import com.mahiro.reviewbot.dto.ReviewSummary;
 import com.mahiro.reviewbot.model.CodeReview;
+import com.mahiro.reviewbot.model.Problem;
+import com.mahiro.reviewbot.repository.ProblemRepository;
 import com.mahiro.reviewbot.repository.ReviewRepository;
 import com.mahiro.reviewbot.service.GeminiReviewService;
 import org.springframework.http.HttpStatus;
@@ -23,17 +25,24 @@ public class ReviewController {
 
     private final GeminiReviewService geminiReviewService;
     private final ReviewRepository reviewRepository;
+    private final ProblemRepository problemRepository;
 
-    public ReviewController(GeminiReviewService geminiReviewService, ReviewRepository reviewRepository) {
+    public ReviewController(GeminiReviewService geminiReviewService, ReviewRepository reviewRepository,
+                             ProblemRepository problemRepository) {
         this.geminiReviewService = geminiReviewService;
         this.reviewRepository = reviewRepository;
+        this.problemRepository = problemRepository;
     }
 
-    /** コードを送ってレビューしてもらい、結果をDBに保存する */
+    /** コードを送ってレビューしてもらい、結果をDBに保存する。problemIdがあれば正誤判定も行う */
     @PostMapping
     public ResponseEntity<?> createReview(@RequestBody ReviewRequest request) {
         try {
-            GeminiReviewService.ReviewResult result = geminiReviewService.reviewCode(request.getCode());
+            Problem problem = request.getProblemId() != null
+                    ? problemRepository.findById(request.getProblemId()).orElse(null)
+                    : null;
+
+            GeminiReviewService.ReviewResult result = geminiReviewService.reviewCode(request.getCode(), problem);
 
             CodeReview review = new CodeReview();
             review.setCode(request.getCode());
@@ -41,6 +50,7 @@ public class ReviewController {
             review.setScore(result.score());
             review.setCreatedAt(LocalDateTime.now());
             review.setProblemId(request.getProblemId());
+            review.setIsCorrect(result.correct());
 
             CodeReview saved = reviewRepository.save(review);
             return ResponseEntity.ok(ReviewResponse.from(saved));
@@ -73,7 +83,8 @@ public class ReviewController {
                         "review", review.getReview(),
                         "score", review.getScore() == null ? "" : review.getScore(),
                         "createdAt", review.getCreatedAt().toString(),
-                        "problemId", review.getProblemId() == null ? "" : review.getProblemId()
+                        "problemId", review.getProblemId() == null ? "" : review.getProblemId(),
+                        "isCorrect", review.getIsCorrect() == null ? "" : review.getIsCorrect()
                 )))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }

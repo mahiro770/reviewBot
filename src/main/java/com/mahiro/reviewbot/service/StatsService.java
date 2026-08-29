@@ -3,7 +3,11 @@ package com.mahiro.reviewbot.service;
 import com.mahiro.reviewbot.dto.StatsResponse;
 import com.mahiro.reviewbot.model.CodeReview;
 import com.mahiro.reviewbot.model.Goal;
+import com.mahiro.reviewbot.model.Level;
+import com.mahiro.reviewbot.model.LevelCatalog;
+import com.mahiro.reviewbot.model.Problem;
 import com.mahiro.reviewbot.repository.GoalRepository;
+import com.mahiro.reviewbot.repository.ProblemRepository;
 import com.mahiro.reviewbot.repository.ReviewRepository;
 import org.springframework.stereotype.Service;
 
@@ -22,10 +26,12 @@ public class StatsService {
 
     private final ReviewRepository reviewRepository;
     private final GoalRepository goalRepository;
+    private final ProblemRepository problemRepository;
 
-    public StatsService(ReviewRepository reviewRepository, GoalRepository goalRepository) {
+    public StatsService(ReviewRepository reviewRepository, GoalRepository goalRepository, ProblemRepository problemRepository) {
         this.reviewRepository = reviewRepository;
         this.goalRepository = goalRepository;
+        this.problemRepository = problemRepository;
     }
 
     public StatsResponse getStats() {
@@ -44,8 +50,45 @@ public class StatsService {
         stats.setAverageScore(scores.isEmpty() ? null : scores.stream().mapToInt(Integer::intValue).average().orElse(0));
 
         goalRepository.findLatest().ifPresent(goal -> applyGoalProgress(stats, goal));
+        applyCertificationProgress(stats, reviews);
 
         return stats;
+    }
+
+    private void applyCertificationProgress(StatsResponse stats, List<CodeReview> reviews) {
+        Map<Long, Boolean> latestCorrectByProblemId = new HashMap<>();
+        // reviews は新しい順(id DESC)なので、まだ記録されていないproblemIdだけ採用すれば「最新の判定」になる
+        for (CodeReview review : reviews) {
+            if (review.getProblemId() == null || review.getIsCorrect() == null) {
+                continue;
+            }
+            latestCorrectByProblemId.putIfAbsent(review.getProblemId(), review.getIsCorrect());
+        }
+
+        Map<Integer, Boolean> levelCleared = new HashMap<>();
+        for (Problem problem : problemRepository.findAll()) {
+            Boolean correct = latestCorrectByProblemId.get(problem.getId());
+            if (Boolean.TRUE.equals(correct)) {
+                levelCleared.put(problem.getLevelId(), true);
+            }
+        }
+
+        int silverTotal = 0, silverCleared = 0, goldTotal = 0, goldCleared = 0;
+        for (Level level : LevelCatalog.LEVELS) {
+            boolean cleared = levelCleared.getOrDefault(level.id(), false);
+            if (LevelCatalog.SILVER.equals(level.certification())) {
+                silverTotal++;
+                if (cleared) silverCleared++;
+            } else {
+                goldTotal++;
+                if (cleared) goldCleared++;
+            }
+        }
+
+        stats.setSilverCleared(silverCleared);
+        stats.setSilverTotal(silverTotal);
+        stats.setGoldCleared(goldCleared);
+        stats.setGoldTotal(goldTotal);
     }
 
     private List<StatsResponse.ScorePoint> buildScoreTrend(List<CodeReview> reviews) {

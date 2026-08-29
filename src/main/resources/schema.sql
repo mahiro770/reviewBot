@@ -17,15 +17,20 @@ CREATE TABLE IF NOT EXISTS goals (
     updated_at    TEXT    NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS daily_problems (
+-- 「今日の問題」(1日1問の自動出題)機能は「問題集」(レベル別出題)に統合されて廃止された
+DROP TABLE IF EXISTS daily_problems;
+
+CREATE TABLE IF NOT EXISTS problems (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
-    problem_date TEXT    NOT NULL UNIQUE,
+    level_id     INTEGER NOT NULL,
     title        TEXT    NOT NULL,
     difficulty   TEXT,
     description  TEXT    NOT NULL,
+    is_favorite  INTEGER NOT NULL DEFAULT 0,
     created_at   TEXT    NOT NULL
 );
 
 -- 既存DBに対する追加カラム。継続稼働中のDBでは2回目以降エラーになるが
 -- spring.sql.init.continue-on-error=true により無視され、実質的なマイグレーションとして機能する。
-ALTER TABLE code_reviews ADD COLUMN problem_id INTEGER REFERENCES daily_problems(id);
+ALTER TABLE code_reviews ADD COLUMN problem_id INTEGER REFERENCES problems(id);
+ALTER TABLE code_reviews ADD COLUMN is_correct INTEGER;

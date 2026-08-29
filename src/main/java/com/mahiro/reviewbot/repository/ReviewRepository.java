@@ -28,7 +28,7 @@ public class ReviewRepository {
     }
 
     public CodeReview save(CodeReview review) {
-        String sql = "INSERT INTO code_reviews (code, review, score, created_at, problem_id) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO code_reviews (code, review, score, created_at, problem_id, is_correct) VALUES (?, ?, ?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbcTemplate.update(connection -> {
@@ -46,6 +46,11 @@ public class ReviewRepository {
             } else {
                 ps.setNull(5, java.sql.Types.INTEGER);
             }
+            if (review.getIsCorrect() != null) {
+                ps.setInt(6, review.getIsCorrect() ? 1 : 0);
+            } else {
+                ps.setNull(6, java.sql.Types.INTEGER);
+            }
             return ps;
         }, keyHolder);
 
@@ -57,12 +62,12 @@ public class ReviewRepository {
     }
 
     public List<CodeReview> findAllOrderByCreatedAtDesc() {
-        String sql = "SELECT id, code, review, score, created_at, problem_id FROM code_reviews ORDER BY id DESC";
+        String sql = "SELECT id, code, review, score, created_at, problem_id, is_correct FROM code_reviews ORDER BY id DESC";
         return jdbcTemplate.query(sql, this::mapRow);
     }
 
     public Optional<CodeReview> findById(long id) {
-        String sql = "SELECT id, code, review, score, created_at, problem_id FROM code_reviews WHERE id = ?";
+        String sql = "SELECT id, code, review, score, created_at, problem_id, is_correct FROM code_reviews WHERE id = ?";
         List<CodeReview> results = jdbcTemplate.query(sql, this::mapRow, id);
         return results.stream().findFirst();
     }
@@ -71,6 +76,12 @@ public class ReviewRepository {
         String sql = "SELECT COUNT(*) FROM code_reviews WHERE problem_id = ?";
         Integer count = jdbcTemplate.queryForObject(sql, Integer.class, problemId);
         return count != null && count > 0;
+    }
+
+    /** 指定した問題への提出レビューを新しい順に返す(直近の正誤判定を調べるのに使う) */
+    public List<CodeReview> findByProblemIdOrderByCreatedAtDesc(long problemId) {
+        String sql = "SELECT id, code, review, score, created_at, problem_id, is_correct FROM code_reviews WHERE problem_id = ? ORDER BY id DESC";
+        return jdbcTemplate.query(sql, this::mapRow, problemId);
     }
 
     private CodeReview mapRow(java.sql.ResultSet rs, int rowNum) throws java.sql.SQLException {
@@ -85,6 +96,8 @@ public class ReviewRepository {
         ));
         long problemId = rs.getLong("problem_id");
         review.setProblemId(rs.wasNull() ? null : problemId);
+        int isCorrect = rs.getInt("is_correct");
+        review.setIsCorrect(rs.wasNull() ? null : isCorrect != 0);
         return review;
     }
 }

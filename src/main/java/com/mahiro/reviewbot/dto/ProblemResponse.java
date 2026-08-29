@@ -1,27 +1,38 @@
 package com.mahiro.reviewbot.dto;
 
-import com.mahiro.reviewbot.model.DailyProblem;
+import com.mahiro.reviewbot.model.LevelCatalog;
+import com.mahiro.reviewbot.model.Problem;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
-/** 出題された問題としてフロントエンドに返すデータ */
+/** 問題集の1問としてフロントエンドに返すデータ */
 public class ProblemResponse {
 
     private Long id;
-    private LocalDate problemDate;
+    private int levelId;
+    private String levelTitle;
     private String title;
     private String difficulty;
     private String description;
-    private boolean solved;
+    private boolean favorite;
+    private boolean attempted;
+    private Boolean correct;
+    private LocalDateTime createdAt;
 
-    public static ProblemResponse from(DailyProblem problem, boolean solved) {
+    public static ProblemResponse from(Problem problem, boolean attempted, Boolean correct) {
         ProblemResponse res = new ProblemResponse();
         res.id = problem.getId();
-        res.problemDate = problem.getProblemDate();
+        res.levelId = problem.getLevelId();
+        res.levelTitle = LevelCatalog.findById(problem.getLevelId())
+                .map(level -> level.title())
+                .orElse("");
         res.title = problem.getTitle();
         res.difficulty = problem.getDifficulty();
         res.description = problem.getDescription();
-        res.solved = solved;
+        res.favorite = problem.isFavorite();
+        res.attempted = attempted;
+        res.correct = correct;
+        res.createdAt = problem.getCreatedAt();
         return res;
     }
 
@@ -33,12 +44,20 @@ public class ProblemResponse {
         this.id = id;
     }
 
-    public LocalDate getProblemDate() {
-        return problemDate;
+    public int getLevelId() {
+        return levelId;
     }
 
-    public void setProblemDate(LocalDate problemDate) {
-        this.problemDate = problemDate;
+    public void setLevelId(int levelId) {
+        this.levelId = levelId;
+    }
+
+    public String getLevelTitle() {
+        return levelTitle;
+    }
+
+    public void setLevelTitle(String levelTitle) {
+        this.levelTitle = levelTitle;
     }
 
     public String getTitle() {
@@ -65,11 +84,35 @@ public class ProblemResponse {
         this.description = description;
     }
 
-    public boolean isSolved() {
-        return solved;
+    public boolean isFavorite() {
+        return favorite;
     }
 
-    public void setSolved(boolean solved) {
-        this.solved = solved;
+    public void setFavorite(boolean favorite) {
+        this.favorite = favorite;
+    }
+
+    public boolean isAttempted() {
+        return attempted;
+    }
+
+    public void setAttempted(boolean attempted) {
+        this.attempted = attempted;
+    }
+
+    public Boolean getCorrect() {
+        return correct;
+    }
+
+    public void setCorrect(Boolean correct) {
+        this.correct = correct;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

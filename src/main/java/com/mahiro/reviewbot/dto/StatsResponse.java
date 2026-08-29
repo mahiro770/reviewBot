@@ -20,6 +20,10 @@ public class StatsResponse {
     private Double averageScore;
     private Long daysRemaining;
     private Integer progressPercent;
+    private int silverCleared;
+    private int silverTotal;
+    private int goldCleared;
+    private int goldTotal;
 
     public List<ScorePoint> getScoreTrend() {
         return scoreTrend;
@@ -75,5 +79,37 @@ public class StatsResponse {
 
     public void setProgressPercent(Integer progressPercent) {
         this.progressPercent = progressPercent;
+    }
+
+    public int getSilverCleared() {
+        return silverCleared;
+    }
+
+    public void setSilverCleared(int silverCleared) {
+        this.silverCleared = silverCleared;
+    }
+
+    public int getSilverTotal() {
+        return silverTotal;
+    }
+
+    public void setSilverTotal(int silverTotal) {
+        this.silverTotal = silverTotal;
+    }
+
+    public int getGoldCleared() {
+        return goldCleared;
+    }
+
+    public void setGoldCleared(int goldCleared) {
+        this.goldCleared = goldCleared;
+    }
+
+    public int getGoldTotal() {
+        return goldTotal;
+    }
+
+    public void setGoldTotal(int goldTotal) {
+        this.goldTotal = goldTotal;
     }
 }

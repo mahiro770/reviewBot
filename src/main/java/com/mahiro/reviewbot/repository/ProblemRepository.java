@@ -1,6 +1,6 @@
 package com.mahiro.reviewbot.repository;
 
-import com.mahiro.reviewbot.model.DailyProblem;
+import com.mahiro.reviewbot.model.Problem;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -9,13 +9,12 @@ import org.springframework.stereotype.Repository;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.sql.Timestamp;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 /**
- * daily_problems テーブルへのアクセスを担当するRepository。
+ * problems テーブルへのアクセスを担当するRepository。
  */
 @Repository
 public class ProblemRepository {
@@ -26,13 +25,13 @@ public class ProblemRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public DailyProblem save(DailyProblem problem) {
-        String sql = "INSERT INTO daily_problems (problem_date, title, difficulty, description, created_at) VALUES (?, ?, ?, ?, ?)";
+    public Problem save(Problem problem) {
+        String sql = "INSERT INTO problems (level_id, title, difficulty, description, is_favorite, created_at) VALUES (?, ?, ?, ?, 0, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, problem.getProblemDate().toString());
+            ps.setInt(1, problem.getLevelId());
             ps.setString(2, problem.getTitle());
             ps.setString(3, problem.getDifficulty());
             ps.setString(4, problem.getDescription());
@@ -47,35 +46,45 @@ public class ProblemRepository {
         return problem;
     }
 
-    public Optional<DailyProblem> findByDate(LocalDate date) {
-        String sql = "SELECT id, problem_date, title, difficulty, description, created_at FROM daily_problems WHERE problem_date = ?";
-        List<DailyProblem> results = jdbcTemplate.query(sql, this::mapRow, date.toString());
+    public Optional<Problem> findById(long id) {
+        String sql = "SELECT id, level_id, title, difficulty, description, is_favorite, created_at FROM problems WHERE id = ?";
+        List<Problem> results = jdbcTemplate.query(sql, this::mapRow, id);
         return results.stream().findFirst();
     }
 
-    public Optional<DailyProblem> findById(long id) {
-        String sql = "SELECT id, problem_date, title, difficulty, description, created_at FROM daily_problems WHERE id = ?";
-        List<DailyProblem> results = jdbcTemplate.query(sql, this::mapRow, id);
-        return results.stream().findFirst();
+    public List<Problem> findByLevelId(int levelId) {
+        String sql = "SELECT id, level_id, title, difficulty, description, is_favorite, created_at FROM problems WHERE level_id = ? ORDER BY id DESC";
+        return jdbcTemplate.query(sql, this::mapRow, levelId);
     }
 
-    public List<String> findRecentTitles(int limit) {
-        String sql = "SELECT title FROM daily_problems ORDER BY id DESC LIMIT ?";
-        return jdbcTemplate.queryForList(sql, String.class, limit);
+    public List<String> findRecentTitlesByLevel(int levelId, int limit) {
+        String sql = "SELECT title FROM problems WHERE level_id = ? ORDER BY id DESC LIMIT ?";
+        return jdbcTemplate.queryForList(sql, String.class, levelId, limit);
     }
 
-    public List<DailyProblem> findAllOrderByDateDesc() {
-        String sql = "SELECT id, problem_date, title, difficulty, description, created_at FROM daily_problems ORDER BY problem_date DESC";
+    public List<Problem> findFavorites() {
+        String sql = "SELECT id, level_id, title, difficulty, description, is_favorite, created_at FROM problems WHERE is_favorite = 1 ORDER BY id DESC";
         return jdbcTemplate.query(sql, this::mapRow);
     }
 
-    private DailyProblem mapRow(java.sql.ResultSet rs, int rowNum) throws java.sql.SQLException {
-        DailyProblem problem = new DailyProblem();
+    public List<Problem> findAll() {
+        String sql = "SELECT id, level_id, title, difficulty, description, is_favorite, created_at FROM problems ORDER BY id DESC";
+        return jdbcTemplate.query(sql, this::mapRow);
+    }
+
+    public void setFavorite(long id, boolean favorite) {
+        String sql = "UPDATE problems SET is_favorite = ? WHERE id = ?";
+        jdbcTemplate.update(sql, favorite ? 1 : 0, id);
+    }
+
+    private Problem mapRow(java.sql.ResultSet rs, int rowNum) throws java.sql.SQLException {
+        Problem problem = new Problem();
         problem.setId(rs.getLong("id"));
-        problem.setProblemDate(LocalDate.parse(rs.getString("problem_date")));
+        problem.setLevelId(rs.getInt("level_id"));
         problem.setTitle(rs.getString("title"));
         problem.setDifficulty(rs.getString("difficulty"));
         problem.setDescription(rs.getString("description"));
+        problem.setFavorite(rs.getInt("is_favorite") != 0);
         problem.setCreatedAt(LocalDateTime.parse(rs.getString("created_at").replace(" ", "T")));
         return problem;
     }

@@ -11,6 +11,7 @@ public class ReviewSummary {
     private String codePreview;
     private Integer score;
     private LocalDateTime createdAt;
+    private Boolean isCorrect;
 
     public static ReviewSummary from(CodeReview review) {
         ReviewSummary summary = new ReviewSummary();
@@ -19,6 +20,7 @@ public class ReviewSummary {
         summary.codePreview = code.length() > 80 ? code.substring(0, 80) + "..." : code;
         summary.score = review.getScore();
         summary.createdAt = review.getCreatedAt();
+        summary.isCorrect = review.getIsCorrect();
         return summary;
     }
 
@@ -52,5 +54,13 @@ public class ReviewSummary {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Boolean getIsCorrect() {
+        return isCorrect;
+    }
+
+    public void setIsCorrect(Boolean isCorrect) {
+        this.isCorrect = isCorrect;
     }
 }

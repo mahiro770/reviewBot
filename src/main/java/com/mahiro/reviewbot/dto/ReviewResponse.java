@@ -12,6 +12,7 @@ public class ReviewResponse {
     private Integer score;
     private LocalDateTime createdAt;
     private Long problemId;
+    private Boolean isCorrect;
 
     public ReviewResponse() {
     }
@@ -23,6 +24,7 @@ public class ReviewResponse {
         res.score = review.getScore();
         res.createdAt = review.getCreatedAt();
         res.problemId = review.getProblemId();
+        res.isCorrect = review.getIsCorrect();
         return res;
     }
 
@@ -64,5 +66,13 @@ public class ReviewResponse {
 
     public void setProblemId(Long problemId) {
         this.problemId = problemId;
+    }
+
+    public Boolean getIsCorrect() {
+        return isCorrect;
+    }
+
+    public void setIsCorrect(Boolean isCorrect) {
+        this.isCorrect = isCorrect;
     }
 }

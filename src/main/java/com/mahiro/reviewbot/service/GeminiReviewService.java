@@ -4,6 +4,7 @@ import com.mahiro.reviewbot.dto.GeminiContent;
 import com.mahiro.reviewbot.dto.GeminiGenerationConfig;
 import com.mahiro.reviewbot.dto.GeminiRequest;
 import com.mahiro.reviewbot.dto.GeminiResponse;
+import com.mahiro.reviewbot.model.Problem;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -54,15 +55,22 @@ public class GeminiReviewService {
     private int maxTokens;
 
     private static final Pattern SCORE_PATTERN = Pattern.compile("スコア[:：]\\s*(\\d{1,3})\\s*/\\s*100");
+    private static final Pattern JUDGEMENT_PATTERN = Pattern.compile("判定[:：]\\s*(正解|不正解)");
 
     public GeminiReviewService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 
-    public record ReviewResult(String reviewText, Integer score) {
+    public record ReviewResult(String reviewText, Integer score, Boolean correct) {
     }
 
+    /** アドホックなレビュー(問題との紐付けなし)。正誤判定は行わない */
     public ReviewResult reviewCode(String code) {
+        return reviewCode(code, null);
+    }
+
+    /** problem が指定されている場合は、その問題の要件を満たしているかも判定させる */
+    public ReviewResult reviewCode(String code, Problem problem) {
         if (apiKey == null || apiKey.isBlank()) {
             throw new IllegalStateException(
                     "GEMINI_API_KEY が設定されていません。環境変数にAPIキーを設定して起動し直してください。");
@@ -71,9 +79,26 @@ public class GeminiReviewService {
             throw new IllegalArgumentException("レビューするコードが空です。");
         }
 
+        String systemPrompt = SYSTEM_PROMPT;
+        String userMessage;
+        if (problem != null) {
+            systemPrompt += """
+
+                    この回答は、以下の問題に対する提出です。問題の要件を満たしているかどうかも判定してください。
+                    出力の最後から2行目に、必ず次の形式のみで判定を書いてください(他の文字を含めない):
+                    判定: 正解 または 判定: 不正解
+                    (最後の行は、これまで通り「スコア: XX/100」のままにしてください)
+                    """;
+            userMessage = "次の問題と、それに対する回答Javaコードをレビューしてください:\n\n" +
+                    "## 問題\n" + problem.getDescription() + "\n\n" +
+                    "## 回答コード\n```java\n" + code + "\n```";
+        } else {
+            userMessage = "次のJavaコードをレビューしてください:\n\n```java\n" + code + "\n```";
+        }
+
         GeminiRequest request = new GeminiRequest(
-                List.of(GeminiContent.ofText("user", "次のJavaコードをレビューしてください:\n\n```java\n" + code + "\n```")),
-                GeminiContent.ofText(null, SYSTEM_PROMPT),
+                List.of(GeminiContent.ofText("user", userMessage)),
+                GeminiContent.ofText(null, systemPrompt),
                 new GeminiGenerationConfig(maxTokens)
         );
 
@@ -90,7 +115,8 @@ public class GeminiReviewService {
             throw new IllegalStateException("Gemini APIから空のレスポンスが返ってきました。");
         }
 
-        return new ReviewResult(text, extractScore(text));
+        Boolean correct = problem != null ? extractJudgement(text) : null;
+        return new ReviewResult(text, extractScore(text), correct);
     }
 
     private String extractText(GeminiResponse response) {
@@ -111,6 +137,15 @@ public class GeminiReviewService {
         Integer last = null;
         while (matcher.find()) {
             last = Integer.parseInt(matcher.group(1));
+        }
+        return last;
+    }
+
+    private Boolean extractJudgement(String text) {
+        Matcher matcher = JUDGEMENT_PATTERN.matcher(text);
+        Boolean last = null;
+        while (matcher.find()) {
+            last = "正解".equals(matcher.group(1));
         }
         return last;
     }

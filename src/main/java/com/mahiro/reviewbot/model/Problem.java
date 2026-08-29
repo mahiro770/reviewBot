@@ -1,18 +1,18 @@
 package com.mahiro.reviewbot.model;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * 1日1問、Geminiが目標に合わせて生成するプログラミング問題。
+ * 問題集の1問。指定レベルに沿ってGeminiが生成するプログラミング問題。
  */
-public class DailyProblem {
+public class Problem {
 
     private Long id;
-    private LocalDate problemDate;
+    private int levelId;
     private String title;
     private String difficulty;
     private String description;
+    private boolean favorite;
     private LocalDateTime createdAt;
 
     public Long getId() {
@@ -23,12 +23,12 @@ public class DailyProblem {
         this.id = id;
     }
 
-    public LocalDate getProblemDate() {
-        return problemDate;
+    public int getLevelId() {
+        return levelId;
     }
 
-    public void setProblemDate(LocalDate problemDate) {
-        this.problemDate = problemDate;
+    public void setLevelId(int levelId) {
+        this.levelId = levelId;
     }
 
     public String getTitle() {
@@ -53,6 +53,14 @@ public class DailyProblem {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public boolean isFavorite() {
+        return favorite;
+    }
+
+    public void setFavorite(boolean favorite) {
+        this.favorite = favorite;
     }
 
     public LocalDateTime getCreatedAt() {
