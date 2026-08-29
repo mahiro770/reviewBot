@@ -504,10 +504,11 @@ input[type="number"], input[type="date"], input[type="text"] {
     background: transparent;
     border: 1px solid var(--panel-border);
     color: var(--text-dim);
-    font-size: 16px;
-    padding: 4px 10px;
+    padding: 6px 9px;
     border-radius: var(--radius);
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
 }
 
 .favorite-btn:hover {
@@ -523,28 +524,28 @@ input[type="number"], input[type="date"], input[type="text"] {
 /* ==== アイコン(icons.js) ==== */
 
 .icon {
-    width: 16px;
-    height: 16px;
-    vertical-align: -3px;
+    width: 13px;
+    height: 13px;
+    vertical-align: -2px;
     flex-shrink: 0;
 }
 
 .icon-sm {
-    width: 13px;
-    height: 13px;
-    vertical-align: -2px;
+    width: 10px;
+    height: 10px;
+    vertical-align: -1px;
 }
 
 .icon-lg {
-    width: 20px;
-    height: 20px;
-    vertical-align: -5px;
+    width: 15px;
+    height: 15px;
+    vertical-align: -3px;
 }
 
 .title-icon {
-    width: 22px;
-    height: 22px;
-    vertical-align: -4px;
+    width: 16px;
+    height: 16px;
+    vertical-align: -3px;
     margin-right: 6px;
     color: var(--accent);
 }
