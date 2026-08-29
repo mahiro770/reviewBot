@@ -4,10 +4,8 @@ import com.mahiro.reviewbot.dto.StatsResponse;
 import com.mahiro.reviewbot.model.CodeReview;
 import com.mahiro.reviewbot.model.Goal;
 import com.mahiro.reviewbot.model.Level;
-import com.mahiro.reviewbot.model.LevelCatalog;
-import com.mahiro.reviewbot.model.Problem;
 import com.mahiro.reviewbot.repository.GoalRepository;
-import com.mahiro.reviewbot.repository.ProblemRepository;
+import com.mahiro.reviewbot.repository.LevelRepository;
 import com.mahiro.reviewbot.repository.ReviewRepository;
 import org.springframework.stereotype.Service;
 
@@ -26,12 +24,15 @@ public class StatsService {
 
     private final ReviewRepository reviewRepository;
     private final GoalRepository goalRepository;
-    private final ProblemRepository problemRepository;
+    private final LevelRepository levelRepository;
+    private final LevelProgressService levelProgressService;
 
-    public StatsService(ReviewRepository reviewRepository, GoalRepository goalRepository, ProblemRepository problemRepository) {
+    public StatsService(ReviewRepository reviewRepository, GoalRepository goalRepository,
+                         LevelRepository levelRepository, LevelProgressService levelProgressService) {
         this.reviewRepository = reviewRepository;
         this.goalRepository = goalRepository;
-        this.problemRepository = problemRepository;
+        this.levelRepository = levelRepository;
+        this.levelProgressService = levelProgressService;
     }
 
     public StatsResponse getStats() {
@@ -50,33 +51,18 @@ public class StatsService {
         stats.setAverageScore(scores.isEmpty() ? null : scores.stream().mapToInt(Integer::intValue).average().orElse(0));
 
         goalRepository.findLatest().ifPresent(goal -> applyGoalProgress(stats, goal));
-        applyCertificationProgress(stats, reviews);
+        applyCertificationProgress(stats);
 
         return stats;
     }
 
-    private void applyCertificationProgress(StatsResponse stats, List<CodeReview> reviews) {
-        Map<Long, Boolean> latestCorrectByProblemId = new HashMap<>();
-        // reviews は新しい順(id DESC)なので、まだ記録されていないproblemIdだけ採用すれば「最新の判定」になる
-        for (CodeReview review : reviews) {
-            if (review.getProblemId() == null || review.getIsCorrect() == null) {
-                continue;
-            }
-            latestCorrectByProblemId.putIfAbsent(review.getProblemId(), review.getIsCorrect());
-        }
-
-        Map<Integer, Boolean> levelCleared = new HashMap<>();
-        for (Problem problem : problemRepository.findAll()) {
-            Boolean correct = latestCorrectByProblemId.get(problem.getId());
-            if (Boolean.TRUE.equals(correct)) {
-                levelCleared.put(problem.getLevelId(), true);
-            }
-        }
+    private void applyCertificationProgress(StatsResponse stats) {
+        Map<Integer, Integer> correctCounts = levelProgressService.correctCountByLevel();
 
         int silverTotal = 0, silverCleared = 0, goldTotal = 0, goldCleared = 0;
-        for (Level level : LevelCatalog.LEVELS) {
-            boolean cleared = levelCleared.getOrDefault(level.id(), false);
-            if (LevelCatalog.SILVER.equals(level.certification())) {
+        for (Level level : levelRepository.findAll()) {
+            boolean cleared = levelProgressService.isCleared(level.id(), correctCounts);
+            if (Level.SILVER.equals(level.certification())) {
                 silverTotal++;
                 if (cleared) silverCleared++;
             } else {
@@ -125,7 +111,8 @@ public class StatsService {
         return points;
     }
 
-    private int computeStreak(List<CodeReview> reviews) {
+    // package-privateにしてテストから直接呼べるようにしている(純粋なロジックなのでSpringコンテキスト不要)
+    int computeStreak(List<CodeReview> reviews) {
         Set<LocalDate> activeDates = new HashSet<>();
         for (CodeReview review : reviews) {
             activeDates.add(review.getCreatedAt().toLocalDate());

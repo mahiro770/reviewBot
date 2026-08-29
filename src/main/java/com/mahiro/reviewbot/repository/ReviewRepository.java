@@ -66,6 +66,18 @@ public class ReviewRepository {
         return jdbcTemplate.query(sql, this::mapRow);
     }
 
+    /** 履歴一覧の表示用にページングして返す(統計の集計には全件必要なのでfindAllOrderByCreatedAtDescを使う) */
+    public List<CodeReview> findPageOrderByCreatedAtDesc(int limit, int offset) {
+        String sql = "SELECT id, code, review, score, created_at, problem_id, is_correct FROM code_reviews "
+                + "ORDER BY id DESC LIMIT ? OFFSET ?";
+        return jdbcTemplate.query(sql, this::mapRow, limit, offset);
+    }
+
+    public int count() {
+        Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM code_reviews", Integer.class);
+        return count == null ? 0 : count;
+    }
+
     public Optional<CodeReview> findById(long id) {
         String sql = "SELECT id, code, review, score, created_at, problem_id, is_correct FROM code_reviews WHERE id = ?";
         List<CodeReview> results = jdbcTemplate.query(sql, this::mapRow, id);

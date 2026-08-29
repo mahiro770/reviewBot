@@ -1,6 +1,7 @@
 package com.mahiro.reviewbot.dto;
 
 import com.mahiro.reviewbot.model.Level;
+import com.mahiro.reviewbot.service.LevelProgressService;
 
 /** 問題集のレベル一覧としてフロントエンドに返すデータ */
 public class LevelResponse {
@@ -9,13 +10,17 @@ public class LevelResponse {
     private String title;
     private String certification;
     private boolean cleared;
+    private int correctCount;
+    private int requiredCorrectCount;
 
-    public static LevelResponse from(Level level, boolean cleared) {
+    public static LevelResponse from(Level level, int correctCount) {
         LevelResponse res = new LevelResponse();
         res.id = level.id();
         res.title = level.title();
         res.certification = level.certification();
-        res.cleared = cleared;
+        res.correctCount = correctCount;
+        res.requiredCorrectCount = LevelProgressService.REQUIRED_CORRECT_TO_CLEAR;
+        res.cleared = correctCount >= LevelProgressService.REQUIRED_CORRECT_TO_CLEAR;
         return res;
     }
 
@@ -49,5 +54,21 @@ public class LevelResponse {
 
     public void setCleared(boolean cleared) {
         this.cleared = cleared;
+    }
+
+    public int getCorrectCount() {
+        return correctCount;
+    }
+
+    public void setCorrectCount(int correctCount) {
+        this.correctCount = correctCount;
+    }
+
+    public int getRequiredCorrectCount() {
+        return requiredCorrectCount;
+    }
+
+    public void setRequiredCorrectCount(int requiredCorrectCount) {
+        this.requiredCorrectCount = requiredCorrectCount;
     }
 }

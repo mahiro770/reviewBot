@@ -57,6 +57,18 @@ public class ProblemRepository {
         return jdbcTemplate.query(sql, this::mapRow, levelId);
     }
 
+    public List<Problem> findByLevelId(int levelId, int limit, int offset) {
+        String sql = "SELECT id, level_id, title, difficulty, description, is_favorite, created_at FROM problems "
+                + "WHERE level_id = ? ORDER BY id DESC LIMIT ? OFFSET ?";
+        return jdbcTemplate.query(sql, this::mapRow, levelId, limit, offset);
+    }
+
+    public int countByLevelId(int levelId) {
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM problems WHERE level_id = ?", Integer.class, levelId);
+        return count == null ? 0 : count;
+    }
+
     public List<String> findRecentTitlesByLevel(int levelId, int limit) {
         String sql = "SELECT title FROM problems WHERE level_id = ? ORDER BY id DESC LIMIT ?";
         return jdbcTemplate.queryForList(sql, String.class, levelId, limit);

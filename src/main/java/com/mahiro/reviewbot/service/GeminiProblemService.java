@@ -4,16 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mahiro.reviewbot.dto.GeminiContent;
 import com.mahiro.reviewbot.dto.GeminiGenerationConfig;
 import com.mahiro.reviewbot.dto.GeminiRequest;
-import com.mahiro.reviewbot.dto.GeminiResponse;
 import com.mahiro.reviewbot.dto.GeminiSchema;
 import com.mahiro.reviewbot.model.Goal;
 import com.mahiro.reviewbot.model.Level;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Map;
@@ -22,6 +17,7 @@ import java.util.Map;
  * Gemini(Google Generative Language API)を呼び出して、指定レベルのカリキュラムに沿った
  * プログラミング問題を1問生成するサービス。
  * responseSchemaで構造化出力(JSON)を強制するため、自由記述からの正規表現抽出は行わない。
+ * 実際のHTTP呼び出し・リトライは GeminiClient に任せている。
  */
 @Service
 public class GeminiProblemService {
@@ -50,23 +46,14 @@ public class GeminiProblemService {
             List.of("title", "difficulty", "description")
     );
 
-    private final RestTemplate restTemplate;
+    private final GeminiClient geminiClient;
     private final ObjectMapper objectMapper;
-
-    @Value("${gemini.api.key}")
-    private String apiKey;
-
-    @Value("${gemini.api.base-url}")
-    private String baseUrl;
-
-    @Value("${gemini.api.model}")
-    private String model;
 
     @Value("${gemini.api.max-tokens}")
     private int maxTokens;
 
-    public GeminiProblemService(RestTemplate restTemplate, ObjectMapper objectMapper) {
-        this.restTemplate = restTemplate;
+    public GeminiProblemService(GeminiClient geminiClient, ObjectMapper objectMapper) {
+        this.geminiClient = geminiClient;
         this.objectMapper = objectMapper;
     }
 
@@ -74,48 +61,19 @@ public class GeminiProblemService {
     }
 
     public ProblemResult generateProblem(Level level, Goal goal, List<String> recentTitles) {
-        if (apiKey == null || apiKey.isBlank()) {
-            throw new IllegalStateException(
-                    "GEMINI_API_KEY が設定されていません。環境変数にAPIキーを設定して起動し直してください。");
-        }
-
         GeminiRequest request = new GeminiRequest(
                 List.of(GeminiContent.ofText("user", buildUserMessage(level, goal, recentTitles))),
                 GeminiContent.ofText(null, SYSTEM_PROMPT),
                 new GeminiGenerationConfig(maxTokens, RESPONSE_SCHEMA)
         );
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("x-goog-api-key", apiKey);
-
-        HttpEntity<GeminiRequest> entity = new HttpEntity<>(request, headers);
-        String url = baseUrl + "/" + model + ":generateContent";
-        GeminiResponse response = restTemplate.postForObject(url, entity, GeminiResponse.class);
-
-        String text = extractText(response);
-        if (text.isBlank()) {
-            throw new IllegalStateException("Gemini APIから空のレスポンスが返ってきました。");
-        }
+        String text = geminiClient.generateText(request);
 
         try {
             return objectMapper.readValue(text, ProblemResult.class);
         } catch (Exception e) {
             throw new IllegalStateException("Gemini APIの応答を解析できませんでした: " + e.getMessage());
         }
-    }
-
-    private String extractText(GeminiResponse response) {
-        if (response == null || response.getCandidates() == null || response.getCandidates().isEmpty()) {
-            return "";
-        }
-        GeminiContent content = response.getCandidates().get(0).getContent();
-        if (content == null || content.getParts() == null || content.getParts().isEmpty()) {
-            return "";
-        }
-        return content.getParts().stream()
-                .map(part -> part.getText() == null ? "" : part.getText())
-                .reduce("", String::concat);
     }
 
     private String buildUserMessage(Level level, Goal goal, List<String> recentTitles) {

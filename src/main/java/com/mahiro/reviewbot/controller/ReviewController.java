@@ -1,5 +1,6 @@
 package com.mahiro.reviewbot.controller;
 
+import com.mahiro.reviewbot.dto.PageResponse;
 import com.mahiro.reviewbot.dto.ReviewRequest;
 import com.mahiro.reviewbot.dto.ReviewResponse;
 import com.mahiro.reviewbot.dto.ReviewSummary;
@@ -22,6 +23,9 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/reviews")
 public class ReviewController {
+
+    private static final int DEFAULT_LIMIT = 20;
+    private static final int MAX_LIMIT = 100;
 
     private final GeminiReviewService geminiReviewService;
     private final ReviewRepository reviewRepository;
@@ -65,12 +69,18 @@ public class ReviewController {
         }
     }
 
-    /** 過去のレビュー履歴一覧(新しい順) */
+    /** 過去のレビュー履歴一覧(新しい順、ページング対応) */
     @GetMapping
-    public List<ReviewSummary> listReviews() {
-        return reviewRepository.findAllOrderByCreatedAtDesc().stream()
+    public PageResponse<ReviewSummary> listReviews(@RequestParam(defaultValue = "" + DEFAULT_LIMIT) int limit,
+                                                     @RequestParam(defaultValue = "0") int offset) {
+        int effectiveLimit = limit <= 0 ? DEFAULT_LIMIT : Math.min(limit, MAX_LIMIT);
+
+        List<ReviewSummary> items = reviewRepository.findPageOrderByCreatedAtDesc(effectiveLimit, offset).stream()
                 .map(ReviewSummary::from)
                 .toList();
+        int total = reviewRepository.count();
+
+        return PageResponse.of(items, total, effectiveLimit, offset);
     }
 
     /** 過去のレビュー1件の詳細 */

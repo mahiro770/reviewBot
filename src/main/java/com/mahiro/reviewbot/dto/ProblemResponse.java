@@ -1,6 +1,5 @@
 package com.mahiro.reviewbot.dto;
 
-import com.mahiro.reviewbot.model.LevelCatalog;
 import com.mahiro.reviewbot.model.Problem;
 
 import java.time.LocalDateTime;
@@ -19,13 +18,11 @@ public class ProblemResponse {
     private Boolean correct;
     private LocalDateTime createdAt;
 
-    public static ProblemResponse from(Problem problem, boolean attempted, Boolean correct) {
+    public static ProblemResponse from(Problem problem, String levelTitle, boolean attempted, Boolean correct) {
         ProblemResponse res = new ProblemResponse();
         res.id = problem.getId();
         res.levelId = problem.getLevelId();
-        res.levelTitle = LevelCatalog.findById(problem.getLevelId())
-                .map(level -> level.title())
-                .orElse("");
+        res.levelTitle = levelTitle == null ? "" : levelTitle;
         res.title = problem.getTitle();
         res.difficulty = problem.getDifficulty();
         res.description = problem.getDescription();

@@ -81,9 +81,11 @@
     <!-- お気に入り/間違えた問題ビュー(フラットな問題カード一覧) -->
     <div id="libFavorites" class="lib-view panel" hidden>
         <div id="favoritesList" class="problem-list"></div>
+        <button id="favoritesLoadMoreBtn" class="link-btn" hidden style="margin-top:10px;">もっと見る</button>
     </div>
     <div id="libMistakes" class="lib-view panel" hidden>
         <div id="mistakesList" class="problem-list"></div>
+        <button id="mistakesLoadMoreBtn" class="link-btn" hidden style="margin-top:10px;">もっと見る</button>
     </div>
 
     <!-- 問題一覧ビュー(選択したレベルの生成済み問題) -->
@@ -96,6 +98,7 @@
         <div id="problemListStatus" class="status"></div>
         <div id="problemListErrorBox" class="error-box" hidden></div>
         <div id="problemListCards" class="problem-list"></div>
+        <button id="problemListLoadMoreBtn" class="link-btn" hidden style="margin-top:10px;">もっと見る</button>
     </div>
 
     <!-- 問題詳細/回答ビュー -->
@@ -161,6 +164,7 @@
             <div id="historyList" class="history-list">
                 <p class="empty">まだレビュー履歴はありません</p>
             </div>
+            <button id="historyLoadMoreBtn" class="link-btn" hidden style="margin-top:10px;">もっと見る</button>
         </aside>
     </div>
 </section>
