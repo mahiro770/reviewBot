@@ -33,6 +33,8 @@ public class ProblemController {
 
     private static final int DEFAULT_LIMIT = 20;
     private static final int MAX_LIMIT = 100;
+    private static final int DEFAULT_GENERATE_COUNT = 5;
+    private static final int MAX_GENERATE_COUNT = 10;
 
     private final ProblemRepository problemRepository;
     private final GoalRepository goalRepository;
@@ -67,27 +69,32 @@ public class ProblemController {
         return ResponseEntity.ok(PageResponse.of(items, total, limit, offset));
     }
 
-    /** 指定レベルの新しい問題をGeminiに生成してもらい保存する */
+    /** 指定レベルの新しい問題をGeminiにまとめて生成してもらい保存する(デフォルト5問、最大10問) */
     @PostMapping("/generate")
-    public ResponseEntity<?> generateProblem(@RequestBody GenerateProblemRequest request) {
+    public ResponseEntity<?> generateProblems(@RequestBody GenerateProblemRequest request) {
         try {
             Level level = levelRepository.findById(request.getLevelId())
                     .orElseThrow(() -> new IllegalArgumentException("不正なレベルIDです。"));
+            int count = request.getCount() <= 0 ? DEFAULT_GENERATE_COUNT : Math.min(request.getCount(), MAX_GENERATE_COUNT);
 
             Goal goal = goalRepository.findLatest().orElse(null);
             List<String> recentTitles = problemRepository.findRecentTitlesByLevel(level.id(), 10);
 
-            GeminiProblemService.ProblemResult result = geminiProblemService.generateProblem(level, goal, recentTitles);
+            List<GeminiProblemService.ProblemResult> results =
+                    geminiProblemService.generateProblems(level, goal, recentTitles, count);
 
-            Problem problem = new Problem();
-            problem.setLevelId(level.id());
-            problem.setTitle(result.title());
-            problem.setDifficulty(result.difficulty());
-            problem.setDescription(result.description());
-            problem.setCreatedAt(LocalDateTime.now());
+            List<ProblemResponse> saved = results.stream().map(result -> {
+                Problem problem = new Problem();
+                problem.setLevelId(level.id());
+                problem.setTitle(result.title());
+                problem.setDifficulty(result.difficulty());
+                problem.setDescription(result.description());
+                problem.setCreatedAt(LocalDateTime.now());
+                Problem p = problemRepository.save(problem);
+                return ProblemResponse.from(p, level.title(), false, null);
+            }).toList();
 
-            Problem saved = problemRepository.save(problem);
-            return ResponseEntity.ok(ProblemResponse.from(saved, level.title(), false, null));
+            return ResponseEntity.ok(saved);
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

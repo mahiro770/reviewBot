@@ -10,6 +10,7 @@ const mistakesLoadMoreBtn = document.getElementById("mistakesLoadMoreBtn");
 const backToLevelsBtn = document.getElementById("backToLevelsBtn");
 const problemListTitle = document.getElementById("problemListTitle");
 const generateProblemBtn = document.getElementById("generateProblemBtn");
+const generateCountSelect = document.getElementById("generateCountSelect");
 const problemListStatus = document.getElementById("problemListStatus");
 const problemListErrorBox = document.getElementById("problemListErrorBox");
 const problemListCards = document.getElementById("problemListCards");
@@ -160,28 +161,30 @@ async function loadMoreProblemsForLevel() {
 
 async function generateProblem() {
     clearError(problemListErrorBox);
+    const count = Number(generateCountSelect.value) || 5;
     generateProblemBtn.disabled = true;
-    problemListStatus.textContent = "Geminiが問題を生成中...";
+    generateCountSelect.disabled = true;
+    problemListStatus.textContent = `Geminiが問題を${count}問生成中(少し時間がかかります)...`;
 
     try {
         const res = await fetch("/api/problems/generate", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ levelId: state.currentLevelId })
+            body: JSON.stringify({ levelId: state.currentLevelId, count })
         });
         const data = await res.json();
         if (!res.ok) {
             showError(problemListErrorBox, data.error || "問題の生成に失敗しました。");
             return;
         }
-        state.detailBackView = "problemList";
-        openProblemDetail(data);
+        problemListStatus.textContent = `${data.length}問生成しました`;
         await loadProblemsForLevel();
+        setTimeout(() => { problemListStatus.textContent = ""; }, 2500);
     } catch (e) {
         showError(problemListErrorBox, "通信エラーが発生しました: " + e.message);
     } finally {
         generateProblemBtn.disabled = false;
-        problemListStatus.textContent = "";
+        generateCountSelect.disabled = false;
     }
 }
 

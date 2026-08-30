@@ -18,6 +18,7 @@ public class GeminiSchema {
     private String type;
     private Map<String, GeminiSchema> properties;
     private List<String> required;
+    private GeminiSchema items;
 
     @JsonProperty("enum")
     private List<String> enumValues;
@@ -54,6 +55,13 @@ public class GeminiSchema {
         return schema;
     }
 
+    public static GeminiSchema array(GeminiSchema itemSchema) {
+        GeminiSchema schema = new GeminiSchema();
+        schema.type = "ARRAY";
+        schema.items = itemSchema;
+        return schema;
+    }
+
     public String getType() {
         return type;
     }
@@ -84,5 +92,13 @@ public class GeminiSchema {
 
     public void setEnumValues(List<String> enumValues) {
         this.enumValues = enumValues;
+    }
+
+    public GeminiSchema getItems() {
+        return items;
+    }
+
+    public void setItems(GeminiSchema items) {
+        this.items = items;
     }
 }

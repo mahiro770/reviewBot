@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Java学習システム</title>
-<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="style.css?v=4">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 </head>
 <body>
@@ -93,7 +93,15 @@
         <button class="link-btn" id="backToLevelsBtn">← レベル一覧へ戻る</button>
         <div class="result-header">
             <h2 id="problemListTitle">レベル</h2>
-            <button id="generateProblemBtn"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><polyline points="18 3 18 7 14 7"/><polyline points="6 21 6 17 10 17"/></svg> 新しい問題を生成する</button>
+            <div class="generate-controls">
+                <select id="generateCountSelect" title="生成する問題数">
+                    <option value="1">1問</option>
+                    <option value="3">3問</option>
+                    <option value="5" selected>5問</option>
+                    <option value="10">10問</option>
+                </select>
+                <button id="generateProblemBtn"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3"/><polyline points="18 3 18 7 14 7"/><polyline points="6 21 6 17 10 17"/></svg> 新しい問題を生成する</button>
+            </div>
         </div>
         <div id="problemListStatus" class="status"></div>
         <div id="problemListErrorBox" class="error-box" hidden></div>
@@ -189,12 +197,12 @@
 
 </main>
 
-<script src="icons.js?v=3"></script>
-<script src="nav.js?v=3"></script>
-<script src="header.js?v=3"></script>
-<script src="goal.js?v=3"></script>
-<script src="review.js?v=3"></script>
-<script src="problem.js?v=3"></script>
-<script src="stats.js?v=3"></script>
+<script src="icons.js?v=4"></script>
+<script src="nav.js?v=4"></script>
+<script src="header.js?v=4"></script>
+<script src="goal.js?v=4"></script>
+<script src="review.js?v=4"></script>
+<script src="problem.js?v=4"></script>
+<script src="stats.js?v=4"></script>
 </body>
 </html>
