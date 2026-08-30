@@ -90,7 +90,7 @@ function renderHistoryItem(item) {
         <div class="code-preview"></div>
     `;
     div.querySelector(".code-preview").textContent = item.codePreview;
-    div.addEventListener("click", () => loadReviewDetail(item.id));
+    makeClickable(div, () => loadReviewDetail(item.id));
     historyList.appendChild(div);
 }
 

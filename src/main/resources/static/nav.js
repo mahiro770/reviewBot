@@ -34,3 +34,17 @@ function formatDate(iso) {
     if (isNaN(d.getTime())) return iso;
     return d.toLocaleString("ja-JP", { hour12: false });
 }
+
+/** クリックだけで作られがちなカード要素(div)をキーボードでも操作できるようにする。
+    tabindex/role/Enter・Space操作を付与し、通常のclickハンドラも登録する */
+function makeClickable(el, handler) {
+    el.tabIndex = 0;
+    el.setAttribute("role", "button");
+    el.addEventListener("click", handler);
+    el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handler();
+        }
+    });
+}

@@ -5,7 +5,11 @@
     --text: #e6e9f0;
     --text-dim: #9aa4bb;
     --accent: #5b8def;
-    --accent-hover: #4a78d9;
+    /* ボタン背景など「白文字を乗せる」用途は --accent より濃い専用トーン。
+       #5b8defは文字/枠線としては十分なコントラストだが、白文字を乗せた塗り
+       背景としては約3.2:1しかなく、WCAG AAの4.5:1に届かないため分離した */
+    --accent-fill: #2f6fe0;
+    --accent-fill-hover: #2159c4;
     --good: #3ecf8e;
     --mid: #e9b949;
     --bad: #ef5b5b;
@@ -16,11 +20,46 @@
     box-sizing: border-box;
 }
 
+html {
+    scrollbar-color: var(--panel-border) var(--bg);
+    scrollbar-width: thin;
+}
+
 body {
     margin: 0;
     font-family: "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
     background: var(--bg);
     color: var(--text);
+}
+
+::selection {
+    background: rgba(91, 141, 239, 0.35);
+    color: var(--text);
+}
+
+::placeholder {
+    color: var(--text-dim);
+    opacity: 1;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--panel-border);
+    border-radius: var(--radius);
+    border: 2px solid var(--bg);
+}
+
+:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
 }
 
 header {
@@ -58,6 +97,7 @@ header h1 {
     color: var(--accent);
     font-size: 13px;
     font-weight: 600;
+    font-variant-numeric: tabular-nums;
 }
 
 .streak-widget {
@@ -78,6 +118,12 @@ header h1 {
     color: var(--good);
 }
 
+/* silver-icon/gold-iconが自身にcolorを持つため、達成済み(緑)でも
+   アイコンだけ元の色(銀/金)に取り残される問題を防ぐ */
+.cert-badge.cert-complete .icon {
+    color: inherit;
+}
+
 .tab-nav {
     display: flex;
     gap: 4px;
@@ -93,6 +139,8 @@ header h1 {
     padding: 10px 16px;
     font-size: 14px;
     font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
     cursor: pointer;
     border-bottom: 2px solid transparent;
 }
@@ -180,7 +228,7 @@ textarea {
 }
 
 button {
-    background: var(--accent);
+    background: var(--accent-fill);
     color: white;
     border: none;
     border-radius: var(--radius);
@@ -192,7 +240,7 @@ button {
 }
 
 button:hover:not(:disabled) {
-    background: var(--accent-hover);
+    background: var(--accent-fill-hover);
 }
 
 button:disabled {
@@ -235,15 +283,18 @@ button:disabled {
 
 .score-badge {
     font-weight: 700;
-    font-size: 15px;
+    font-size: 13px;
     padding: 4px 12px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.08);
+    font-variant-numeric: tabular-nums;
+    background: rgba(154, 164, 187, 0.12);
+    border: 1px solid rgba(154, 164, 187, 0.4);
+    color: var(--text-dim);
 }
 
-.score-badge.good { color: var(--good); }
-.score-badge.mid { color: var(--mid); }
-.score-badge.bad { color: var(--bad); }
+.score-badge.good { background: rgba(62, 207, 142, 0.12); border-color: rgba(62, 207, 142, 0.4); color: var(--good); }
+.score-badge.mid { background: rgba(233, 185, 73, 0.12); border-color: rgba(233, 185, 73, 0.4); color: var(--mid); }
+.score-badge.bad { background: rgba(239, 91, 91, 0.12); border-color: rgba(239, 91, 91, 0.4); color: var(--bad); }
 
 .review-text {
     white-space: pre-wrap;
@@ -256,7 +307,6 @@ button:disabled {
 
 .history-panel h2 {
     margin: 0 0 12px;
-    font-size: 15px;
 }
 
 .history-list {
@@ -286,6 +336,7 @@ button:disabled {
     font-size: 12px;
     color: var(--text-dim);
     margin-bottom: 4px;
+    font-variant-numeric: tabular-nums;
 }
 
 .history-item .code-preview {
@@ -347,12 +398,37 @@ select {
     }
 }
 
+@media (max-width: 480px) {
+    header {
+        padding: 20px 16px 8px;
+    }
+
+    .tab-nav {
+        padding: 0 16px;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .tab-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .tab-btn {
+        padding: 10px 12px;
+    }
+
+    main {
+        padding: 16px 16px 24px;
+    }
+}
+
 .difficulty-badge {
     font-weight: 600;
     font-size: 13px;
     padding: 4px 12px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(154, 164, 187, 0.12);
+    border: 1px solid rgba(154, 164, 187, 0.4);
     color: var(--text-dim);
 }
 
@@ -383,6 +459,7 @@ select {
     font-size: 22px;
     font-weight: 700;
     color: var(--accent);
+    font-variant-numeric: tabular-nums;
 }
 
 .stat-label {
@@ -499,6 +576,7 @@ select {
     gap: 14px;
     font-size: 12px;
     color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
 }
 
 .link-btn {
@@ -515,6 +593,7 @@ select {
 .link-btn:hover {
     background: transparent;
     text-decoration: underline;
+    text-underline-offset: 2px;
 }
 
 .favorite-btn {

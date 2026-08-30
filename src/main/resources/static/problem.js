@@ -85,7 +85,7 @@ function renderProblemCard(problem, container, showLevel, originView) {
             ${statusLabel}
         </div>
     `;
-    card.addEventListener("click", () => {
+    makeClickable(card, () => {
         state.detailBackView = originView;
         openProblemDetail(problem);
     });
@@ -107,7 +107,7 @@ async function loadLevels() {
                 <div class="level-card-title">${clearedMark}Lv.${level.id} ${level.title}</div>
                 <div class="problem-card-meta"><span>正解 ${level.correctCount}/${level.requiredCorrectCount}</span></div>
             `;
-            card.addEventListener("click", () => openLevel(level.id, level.title));
+            makeClickable(card, () => openLevel(level.id, level.title));
             (level.certification === "SILVER" ? silverLevelGrid : goldLevelGrid).appendChild(card);
         });
     } catch (e) {
