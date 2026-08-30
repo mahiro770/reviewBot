@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-30T01:00:00.000Z",
+  "title": "Design System: Java学習システム",
+  "extensions": {
+    "colorMeta": {
+      "console-blue": {
+        "role": "primary",
+        "displayName": "Console Blue",
+        "canonical": "#5b8def",
+        "tonalRamp": ["#0d1526", "#16233f", "#223a63", "#3b5c96", "#5b8def", "#86aef2", "#b3cbf7", "#e3ecfc"]
+      },
+      "console-blue-fill": {
+        "role": "primary-fill",
+        "displayName": "Console Blue Fill",
+        "canonical": "#2f6fe0"
+      },
+      "console-blue-fill-hover": {
+        "role": "primary-fill-hover",
+        "displayName": "Console Blue Fill Hover",
+        "canonical": "#2159c4"
+      },
+      "deep-navy": {
+        "role": "neutral-bg",
+        "displayName": "Deep Navy",
+        "canonical": "#0f1420",
+        "tonalRamp": ["#05070c", "#0a0e17", "#0f1420", "#171e2e", "#232c40", "#3a4560", "#6b7590", "#a7aec2"]
+      },
+      "slate-panel": {
+        "role": "neutral-surface",
+        "displayName": "Slate Panel",
+        "canonical": "#171e2e"
+      },
+      "ink-well": {
+        "role": "neutral-recessed",
+        "displayName": "Ink Well",
+        "canonical": "#0b0f18"
+      },
+      "panel-border": {
+        "role": "neutral-border",
+        "displayName": "Panel Border",
+        "canonical": "#2a3348"
+      },
+      "text-primary": {
+        "role": "neutral-text",
+        "displayName": "Text Primary",
+        "canonical": "#e6e9f0"
+      },
+      "text-dim": {
+        "role": "neutral-text-muted",
+        "displayName": "Text Dim",
+        "canonical": "#9aa4bb"
+      },
+      "cert-silver": {
+        "role": "accent-muted",
+        "displayName": "Cert Silver",
+        "canonical": "#b9c2d0"
+      },
+      "signal-green": {
+        "role": "success",
+        "displayName": "Signal Green",
+        "canonical": "#3ecf8e",
+        "tonalRamp": ["#052117", "#0a3527", "#0f4e39", "#1c7554", "#3ecf8e", "#75dfae", "#a8ecca", "#daf8e7"]
+      },
+      "warning-amber": {
+        "role": "warning",
+        "displayName": "Warning Amber",
+        "canonical": "#e9b949",
+        "tonalRamp": ["#2a1f05", "#453309", "#6b4f10", "#a3791c", "#e9b949", "#f0cc78", "#f6dea6", "#fbf0d6"]
+      },
+      "alert-red": {
+        "role": "danger",
+        "displayName": "Alert Red",
+        "canonical": "#ef5b5b",
+        "tonalRamp": ["#2c0a0a", "#471212", "#6e1c1c", "#a52d2d", "#ef5b5b", "#f38686", "#f8b0b0", "#fcdada"]
+      },
+      "alert-red-text": {
+        "role": "danger-on-tint",
+        "displayName": "Alert Red Text",
+        "canonical": "#ff9b9b"
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "The single app-title h1 in the header. Appears once per page." },
+      "headline": { "displayName": "Headline", "purpose": "Panel and section titles." },
+      "title": { "displayName": "Title", "purpose": "Subsection group headers (level-grid categories, chart titles), always in Text Dim." },
+      "body": { "displayName": "Body", "purpose": "Paragraph text, review prose, problem descriptions." },
+      "label": { "displayName": "Label", "purpose": "Tab buttons, badges/pills, meta rows, form labels." },
+      "code": { "displayName": "Code", "purpose": "The only role for Java source the user reads or writes — code textareas and code-preview snippets. Never used for prose about code." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "ease-standard", "value": "0.15s ease", "purpose": "The only transition duration/easing used in the system: button hover, tab/card border-color changes." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "700px" },
+      { "name": "md", "value": "900px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The system's only filled button style, used for every primary action (save goal, submit review, generate problems).",
+      "html": "<button class=\"ds-btn-primary\">レビューを依頼する</button>",
+      "css": ".ds-btn-primary { background: #2f6fe0; color: #ffffff; border: none; border-radius: 10px; padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s ease; } .ds-btn-primary:hover { background: #2159c4; } .ds-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }"
+    },
+    {
+      "name": "Ghost / Link Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Transparent, text-only button for secondary navigation actions (\"もっと見る\", back links).",
+      "html": "<button class=\"ds-btn-ghost\">← レベル一覧へ戻る</button>",
+      "css": ".ds-btn-ghost { background: transparent; color: #5b8def; border: none; padding: 0; font-size: 13px; font-weight: 600; cursor: pointer; } .ds-btn-ghost:hover { text-decoration: underline; }"
+    },
+    {
+      "name": "Status Pill",
+      "kind": "chip",
+      "refersTo": "status-pill",
+      "description": "Translucent tint background + tint border + solid semantic text. Used for header widgets, cert badges, score/difficulty badges, and the favorited state.",
+      "html": "<span class=\"ds-pill ds-pill-good\">✓ 92点</span>",
+      "css": ".ds-pill { display: inline-block; padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; } .ds-pill-good { background: rgba(62, 207, 142, 0.12); border: 1px solid rgba(62, 207, 142, 0.4); color: #3ecf8e; } .ds-pill-warn { background: rgba(233, 185, 73, 0.12); border: 1px solid rgba(233, 185, 73, 0.4); color: #e9b949; } .ds-pill-bad { background: rgba(239, 91, 91, 0.12); border: 1px solid rgba(239, 91, 91, 0.4); color: #ef5b5b; } .ds-pill-neutral { background: rgba(154, 164, 187, 0.12); border: 1px solid rgba(154, 164, 187, 0.4); color: #9aa4bb; }"
+    },
+    {
+      "name": "Well Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The recessed list-item card used for levels, generated problems, and review-history entries. One layer darker than its parent panel, with a hover border that signals interactivity.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">配列とコレクション</div><div class=\"ds-card-meta\"><span>Silver Lv.3</span><span>3問生成済み</span></div></div>",
+      "css": ".ds-card { background: #0b0f18; border: 1px solid #2a3348; border-radius: 10px; padding: 12px 14px; cursor: pointer; transition: border-color 0.15s ease; } .ds-card:hover { border-color: #5b8def; } .ds-card.ds-card-cleared { border-color: rgba(62, 207, 142, 0.4); } .ds-card-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; color: #e6e9f0; } .ds-card-meta { display: flex; gap: 14px; font-size: 12px; color: #9aa4bb; }"
+    },
+    {
+      "name": "Code Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "The monospace textarea used for pasting or writing Java code — the one place the Code typography role appears in an editable control.",
+      "html": "<textarea class=\"ds-input-code\" placeholder=\"ここにJavaのコードを貼り付けてください...\"></textarea>",
+      "css": ".ds-input-code { width: 100%; min-height: 320px; resize: vertical; background: #0b0f18; color: #e6e9f0; border: 1px solid #2a3348; border-radius: 10px; padding: 12px; font-family: 'Fira Code', Consolas, 'Courier New', monospace; font-size: 13px; line-height: 1.5; }"
+    },
+    {
+      "name": "Primary Tab",
+      "kind": "nav",
+      "refersTo": "tab-nav",
+      "description": "Top-level section nav — underline style, no background fill, active tab in Console Blue.",
+      "html": "<nav class=\"ds-tab-nav\"><button class=\"ds-tab active\">目標</button><button class=\"ds-tab\">問題集</button></nav>",
+      "css": ".ds-tab-nav { display: flex; gap: 4px; border-bottom: 1px solid #2a3348; } .ds-tab { background: transparent; color: #9aa4bb; border: none; padding: 10px 16px; font-size: 14px; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; } .ds-tab:hover { color: #e6e9f0; } .ds-tab.active { color: #5b8def; border-bottom-color: #5b8def; }"
+    },
+    {
+      "name": "Line Icon",
+      "kind": "custom",
+      "refersTo": "icon-system",
+      "description": "The signature custom icon set (icons.js) that replaced emoji app-wide: 24×24 viewBox, stroke-width 1.8, round caps/joins, currentColor stroke, optional filled mode.",
+      "html": "<svg class=\"ds-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><polyline points=\"8 12.5 11 15.5 16 9\"/></svg>",
+      "css": ".ds-icon { width: 13px; height: 13px; vertical-align: -2px; flex-shrink: 0; color: #3ecf8e; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Night Console",
+    "overview": "The app reads as a single instrument panel a solo learner sits at after hours: deep navy field, a handful of glowing status widgets across the header (days-to-goal, streak, Silver/Gold badge progress), and one deliberate accent blue reserved for anything the user can act on right now. Nothing else competes for attention — there is no marketing voice, no illustration, no gradient; the interface exists purely to keep one person's study loop legible at a glance.\n\nThe mood is calm and focused. Every surface is flat and quiet by default; color is spent only when it means something (an interactive control, a pass/fail signal, a streak). This restraint is what makes the header widgets and score badges pop without the UI ever feeling busy — the palette has almost nowhere else to spend saturation, so when it does, it reads clearly.\n\nComponents are understated and utilitarian: thin hairline borders, a single shared corner radius, no shadows, no ornament. The system trusts background-layering and semantic color alone to carry structure and status, the way a terminal or diagnostics panel would rather than a consumer app.",
+    "keyCharacteristics": [
+      "Dark, single-theme console field — three fixed background layers (page → panel → well) instead of light/dark variants.",
+      "One interactive hue (console blue); green/amber/red exist only as pass/caution/fail signals, never decoration.",
+      "Fully flat — depth comes from borders and background-layer contrast, never box-shadow.",
+      "A single custom inline-SVG line-icon set (icons.js) stands in for all iconography; no emoji anywhere in the UI.",
+      "One shared corner radius (10px) everywhere, plus a full pill (999px) reserved for status chips.",
+      "Monospace type appears only where Java code is actually read or written."
+    ],
+    "rules": [
+      { "name": "The Signal-Only Rule", "body": "Blue is the only interactive color; green, amber, and red are reserved exclusively for status (pass / caution-or-streak / fail) and never used decoratively.", "section": "colors" },
+      { "name": "The Two-Weight Blue Rule", "body": "One hue, two lightness roles: Console Blue stays light enough to read as text/border against Deep Navy; Console Blue Fill / Fill Hover stay dark enough that white button labels clear 4.5:1. Never put white text on Console Blue itself, and never use the Fill shades as text on a dark background.", "section": "colors" },
+      { "name": "The Monospace Boundary Rule", "body": "Monospace type appears only where Java source is being read or written (code textareas, code-preview snippets) — even prose that discusses code (problem descriptions, review results) stays in the sans stack.", "section": "typography" },
+      { "name": "The Layered-Well Rule", "body": "Depth comes from three fixed background layers and a one-step border-color change on interaction — never from shadows or elevation transforms.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use the shared 10px radius on every rectangular surface; reserve the 999px pill radius exclusively for status chips.",
+      "Do treat Console Blue as the system's only interactive hue; keep green/amber/red scoped to pass/caution-or-streak/fail meaning.",
+      "Do build all iconography from the icons.js line-icon set (24×24, stroke-width 1.8, round caps/joins, currentColor).",
+      "Do use the Code typography role only for Java source the user reads or writes; keep review/description prose in the sans body role even when it discusses code.",
+      "Do use the Ink Well background to mark anything \"one step deeper\" than its parent panel, keeping the three-layer stack consistent."
+    ],
+    "donts": [
+      "Don't use emoji as UI icons or tab/status labels — this system deliberately replaced its emoji icons with the icons.js line-icon set; never reintroduce emoji glyphs into the interface.",
+      "Don't introduce a second interactive accent color; Console Blue is the system's only \"this is clickable\" signal.",
+      "Don't repurpose Signal Green / Warning Amber / Alert Red for anything other than their pass / caution-or-streak / fail meaning — they are status signals, not a decorative palette."
+    ]
+  }
+}

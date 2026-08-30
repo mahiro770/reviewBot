@@ -10,5 +10,9 @@ review.db-journal
 *.iml
 .vscode/
 
-# エディタ/エージェント関連のローカル状態
-.claude/
+# エディタ/エージェント関連のローカル状態(スキル本体 .claude/skills/ はコミットする)
+.claude/scheduled_tasks.lock
+.claude/settings.local.json
+
+# impeccableスキルのローカルキャッシュ(マシン固有の絶対パス・セッションIDを含むため)
+.impeccable/hook.cache.json

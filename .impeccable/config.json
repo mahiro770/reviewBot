@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font-size",
+        "value": "12px",
+        "files": [
+          "src/main/resources/static/style.css"
+        ],
+        "createdAt": "2026-08-30T12:46:58.470Z",
+        "reason": "DESIGN.md documents the Label role as 12-13px explicitly; these are meta/caption text (history/problem-card meta, stat-label) within that documented range, not drift"
+      }
+    ]
+  }
+}
