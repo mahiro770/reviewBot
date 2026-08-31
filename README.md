@@ -1,5 +1,7 @@
 # Java学習システム
 
+[![CI](https://github.com/mahiro770/reviewBot/actions/workflows/ci.yml/badge.svg)](https://github.com/mahiro770/reviewBot/actions/workflows/ci.yml)
+
 Spring Boot + Gemini API で、Javaの学習を「目標設定 → 毎日の問題 → AIレビュー → 進捗の可視化」の
 サイクルで継続できるようにする学習用アプリです。Gemini APIは無料枠があるため、学習用途であれば
 費用をかけずに使えます。
