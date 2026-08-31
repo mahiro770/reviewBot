@@ -32,6 +32,7 @@ Combines a certification-scoped problem curriculum (12 levels: Silver 7 + Gold 5
 - The Gemini model is swappable via `application.properties` (`gemini.api.model`), constrained to whatever the free tier allows.
 - Review/problem-generation prompts are customizable by editing `SYSTEM_PROMPT` in `GeminiReviewService` / `GeminiProblemService`.
 - Problem generation produces 1/3/5/10 problems per Gemini call (default 5, max 10) — batching problems into one call keeps API call count from scaling with problem count.
+- Problem difficulty auto-adjusts based on the learner's recent correct rate within that level (last 5 judged attempts, computed in `LevelProgressService.recentPerformance`): ≥75% nudges Gemini toward harder problems, ≤35% nudges toward easier ones, via a soft prompt hint in `GeminiProblemService` — never a hard constraint on the `difficulty` field, and never outside the level's own topic range.
 - Schema changes are additive-only: new `V3__xxx.sql`-style migration files; existing V1/V2 are not modified.
 
 ## Brand Commitments

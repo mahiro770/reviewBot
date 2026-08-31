@@ -69,11 +69,13 @@ public class GeminiProblemService {
     }
 
     /** 指定レベルの問題を count 問まとめて生成する */
-    public List<ProblemResult> generateProblems(Level level, Goal goal, List<String> recentTitles, int count) {
+    public List<ProblemResult> generateProblems(Level level, Goal goal, List<String> recentTitles, int count,
+                                                 LevelProgressService.RecentPerformance recentPerformance) {
         int maxTokens = Math.max(baseMaxTokens, TOKENS_OVERHEAD + TOKENS_PER_PROBLEM * count);
 
         GeminiRequest request = new GeminiRequest(
-                List.of(GeminiContent.ofText("user", buildUserMessage(level, goal, recentTitles, count))),
+                List.of(GeminiContent.ofText("user",
+                        buildUserMessage(level, goal, recentTitles, count, recentPerformance))),
                 GeminiContent.ofText(null, SYSTEM_PROMPT),
                 new GeminiGenerationConfig(maxTokens, RESPONSE_SCHEMA)
         );
@@ -94,7 +96,8 @@ public class GeminiProblemService {
         }
     }
 
-    private String buildUserMessage(Level level, Goal goal, List<String> recentTitles, int count) {
+    private String buildUserMessage(Level level, Goal goal, List<String> recentTitles, int count,
+                                     LevelProgressService.RecentPerformance recentPerformance) {
         StringBuilder sb = new StringBuilder();
         sb.append("## レベル\n");
         sb.append("レベル").append(level.id()).append(": ").append(level.title())
@@ -114,7 +117,32 @@ public class GeminiProblemService {
             recentTitles.forEach(title -> sb.append("- ").append(title).append("\n"));
         }
 
+        appendDifficultyHint(sb, recentPerformance);
+
         sb.append("\nこのレベルの問題を").append(count).append("問作成してください。");
         return sb.toString();
+    }
+
+    /**
+     * 直近の正誤傾向に応じて、difficultyフィールドの選択に対するソフトな指示を追加する。
+     * あくまでヒントであり、レベル本来の出題範囲を優先させる(「範囲は超えない」と明記する)。
+     * サンプルが少なすぎる、または正解率が中間的な場合は何も追加しない(現状維持)。
+     */
+    private void appendDifficultyHint(StringBuilder sb, LevelProgressService.RecentPerformance recentPerformance) {
+        if (recentPerformance == null || !recentPerformance.hasEnoughData()) {
+            return;
+        }
+        double rate = recentPerformance.correctRate();
+        String summary = "直近" + recentPerformance.totalCount() + "問中" + recentPerformance.correctCount() + "問正解";
+
+        if (rate >= 0.75) {
+            sb.append("\n## 難易度の調整ヒント\n");
+            sb.append(summary).append("と正解率が高めです。このレベルの出題範囲は超えない前提で、")
+                    .append("今回は気持ち難易度を上げてください(条件を増やす、境界値やエッジケースを絡めるなど)。\n");
+        } else if (rate <= 0.35) {
+            sb.append("\n## 難易度の調整ヒント\n");
+            sb.append(summary).append("と正解率が低めです。このレベルの出題範囲は超えない前提で、")
+                    .append("今回は気持ち易しめにしてください(要件をシンプルにする、ヒントを添えるなど)。\n");
+        }
     }
 }

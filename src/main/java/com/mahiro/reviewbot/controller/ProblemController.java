@@ -13,6 +13,7 @@ import com.mahiro.reviewbot.repository.LevelRepository;
 import com.mahiro.reviewbot.repository.ProblemRepository;
 import com.mahiro.reviewbot.repository.ReviewRepository;
 import com.mahiro.reviewbot.service.GeminiProblemService;
+import com.mahiro.reviewbot.service.LevelProgressService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -41,15 +42,17 @@ public class ProblemController {
     private final ReviewRepository reviewRepository;
     private final LevelRepository levelRepository;
     private final GeminiProblemService geminiProblemService;
+    private final LevelProgressService levelProgressService;
 
     public ProblemController(ProblemRepository problemRepository, GoalRepository goalRepository,
                               ReviewRepository reviewRepository, LevelRepository levelRepository,
-                              GeminiProblemService geminiProblemService) {
+                              GeminiProblemService geminiProblemService, LevelProgressService levelProgressService) {
         this.problemRepository = problemRepository;
         this.goalRepository = goalRepository;
         this.reviewRepository = reviewRepository;
         this.levelRepository = levelRepository;
         this.geminiProblemService = geminiProblemService;
+        this.levelProgressService = levelProgressService;
     }
 
     /** 指定レベルの生成済み問題一覧(新しい順、ページング対応) */
@@ -79,9 +82,11 @@ public class ProblemController {
 
             Goal goal = goalRepository.findLatest().orElse(null);
             List<String> recentTitles = problemRepository.findRecentTitlesByLevel(level.id(), 10);
+            LevelProgressService.RecentPerformance recentPerformance =
+                    levelProgressService.recentPerformance(level.id());
 
             List<GeminiProblemService.ProblemResult> results =
-                    geminiProblemService.generateProblems(level, goal, recentTitles, count);
+                    geminiProblemService.generateProblems(level, goal, recentTitles, count, recentPerformance);
 
             List<ProblemResponse> saved = results.stream().map(result -> {
                 Problem problem = new Problem();

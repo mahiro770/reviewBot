@@ -7,7 +7,9 @@ import com.mahiro.reviewbot.repository.ReviewRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * レベルごとの「クリア済みかどうか」の判定を1箇所にまとめるService。
@@ -52,5 +54,42 @@ public class LevelProgressService {
 
     public boolean isCleared(int levelId, Map<Integer, Integer> correctCounts) {
         return correctCounts.getOrDefault(levelId, 0) >= REQUIRED_CORRECT_TO_CLEAR;
+    }
+
+    /** 次の問題生成時に難易度を調整する判断材料として使う、そのレベルでの直近の正誤傾向 */
+    public record RecentPerformance(int correctCount, int totalCount) {
+        private static final int MIN_SAMPLE_TO_ADJUST = 2;
+
+        public boolean hasEnoughData() {
+            return totalCount >= MIN_SAMPLE_TO_ADJUST;
+        }
+
+        public double correctRate() {
+            return totalCount == 0 ? 0.0 : (double) correctCount / totalCount;
+        }
+    }
+
+    private static final int RECENT_SAMPLE_SIZE = 5;
+
+    /**
+     * そのレベルの問題への提出のうち、直近(最大{@link #RECENT_SAMPLE_SIZE}件)の正誤判定を集計する。
+     * 同じ問題への再提出も1件として数える(「今のスキル」に近い直近の傾向を見たいため)。
+     */
+    public RecentPerformance recentPerformance(int levelId) {
+        List<Long> problemIds = problemRepository.findByLevelId(levelId).stream()
+                .map(Problem::getId)
+                .toList();
+        if (problemIds.isEmpty()) {
+            return new RecentPerformance(0, 0);
+        }
+
+        List<Boolean> recentJudgements = reviewRepository.findByProblemIds(problemIds).stream()
+                .map(CodeReview::getIsCorrect)
+                .filter(Objects::nonNull)
+                .limit(RECENT_SAMPLE_SIZE)
+                .toList();
+
+        int correct = (int) recentJudgements.stream().filter(Boolean::booleanValue).count();
+        return new RecentPerformance(correct, recentJudgements.size());
     }
 }

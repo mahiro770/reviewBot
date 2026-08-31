@@ -101,4 +101,63 @@ class LevelProgressServiceTest {
 
         assertThat(counts).isEmpty();
     }
+
+    @Test
+    void recentPerformance_hasNoDataWhenLevelHasNoProblems() {
+        when(problemRepository.findByLevelId(10)).thenReturn(List.of());
+
+        LevelProgressService.RecentPerformance result = service.recentPerformance(10);
+
+        assertThat(result.totalCount()).isEqualTo(0);
+        assertThat(result.hasEnoughData()).isFalse();
+    }
+
+    @Test
+    void recentPerformance_notEnoughDataWithOnlyOneJudgedAttempt() {
+        when(problemRepository.findByLevelId(10)).thenReturn(List.of(problem(1, 10)));
+        when(reviewRepository.findByProblemIds(List.of(1L))).thenReturn(List.of(review(1, 1L, true)));
+
+        LevelProgressService.RecentPerformance result = service.recentPerformance(10);
+
+        assertThat(result.hasEnoughData()).isFalse();
+    }
+
+    @Test
+    void recentPerformance_computesRateFromMostRecentAttempts() {
+        when(problemRepository.findByLevelId(10)).thenReturn(List.of(problem(1, 10), problem(2, 10)));
+        // findByProblemIdsはid DESC(新しい順)で返す契約
+        when(reviewRepository.findByProblemIds(List.of(1L, 2L))).thenReturn(List.of(
+                review(4, 2L, true),
+                review(3, 1L, true),
+                review(2, 2L, false),
+                review(1, 1L, false)
+        ));
+
+        LevelProgressService.RecentPerformance result = service.recentPerformance(10);
+
+        assertThat(result.totalCount()).isEqualTo(4);
+        assertThat(result.correctCount()).isEqualTo(2);
+        assertThat(result.correctRate()).isEqualTo(0.5);
+        assertThat(result.hasEnoughData()).isTrue();
+    }
+
+    @Test
+    void recentPerformance_ignoresUnjudgedReviewsAndCapsSampleSize() {
+        when(problemRepository.findByLevelId(10)).thenReturn(List.of(problem(1, 10)));
+        when(reviewRepository.findByProblemIds(List.of(1L))).thenReturn(List.of(
+                review(7, 1L, true),
+                review(6, 1L, true),
+                review(5, 1L, true),
+                review(4, 1L, true),
+                review(3, 1L, true),
+                review(2, 1L, false), // サンプルサイズ(5件)を超えた分は無視される
+                review(1, 1L, null)   // 正誤未判定は数えない
+        ));
+
+        LevelProgressService.RecentPerformance result = service.recentPerformance(10);
+
+        assertThat(result.totalCount()).isEqualTo(5);
+        assertThat(result.correctCount()).isEqualTo(5);
+        assertThat(result.correctRate()).isEqualTo(1.0);
+    }
 }
