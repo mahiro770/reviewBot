@@ -3,8 +3,10 @@ const silverLevelGrid = document.getElementById("silverLevelGrid");
 const goldLevelGrid = document.getElementById("goldLevelGrid");
 const favoritesList = document.getElementById("favoritesList");
 const favoritesLoadMoreBtn = document.getElementById("favoritesLoadMoreBtn");
+const favoritesErrorBox = document.getElementById("favoritesErrorBox");
 const mistakesList = document.getElementById("mistakesList");
 const mistakesLoadMoreBtn = document.getElementById("mistakesLoadMoreBtn");
+const mistakesErrorBox = document.getElementById("mistakesErrorBox");
 
 // ---- 問題一覧ビュー ----
 const backToLevelsBtn = document.getElementById("backToLevelsBtn");
@@ -42,6 +44,7 @@ const PAGE_SIZE = 20;
 /** このタブが今どのレベル/問題を見ているか、各リストをどこまで読み込んだかをまとめて持つ */
 const state = {
     currentLevelId: null,
+    currentLevelWasCleared: false,
     currentProblem: null,
     detailBackView: "levels",
     problemListOffset: 0,
@@ -107,21 +110,42 @@ async function loadLevels() {
                 <div class="level-card-title">${clearedMark}Lv.${level.id} ${level.title}</div>
                 <div class="problem-card-meta"><span>正解 ${level.correctCount}/${level.requiredCorrectCount}</span></div>
             `;
-            makeClickable(card, () => openLevel(level.id, level.title));
+            makeClickable(card, () => openLevel(level.id, level.title, level.cleared));
             (level.certification === "SILVER" ? silverLevelGrid : goldLevelGrid).appendChild(card);
         });
     } catch (e) {
-        silverLevelGrid.innerHTML = `<p class="empty">レベル一覧の取得に失敗しました: ${e.message}</p>`;
+        const empty = document.createElement("p");
+        empty.className = "empty";
+        empty.textContent = "レベル一覧の取得に失敗しました: " + friendlyErrorMessage(e);
+        silverLevelGrid.innerHTML = "";
+        silverLevelGrid.appendChild(empty);
     }
 }
 
-async function openLevel(levelId, levelTitle) {
+async function openLevel(levelId, levelTitle, wasCleared) {
     state.currentLevelId = levelId;
+    state.currentLevelWasCleared = !!wasCleared;
     state.detailBackView = "problemList";
     state.problemListOffset = 0;
     problemListTitle.textContent = `Lv.${levelId} ${levelTitle}`;
     showLibView("problemList");
     await loadProblemsForLevel();
+}
+
+/** 正解した直後に、今のレベルがちょうど今回クリアになったかを調べ、なっていれば一度だけ通知する */
+async function checkLevelClearMilestone() {
+    if (!state.currentLevelId || state.currentLevelWasCleared) return;
+    try {
+        const res = await fetch("/api/levels");
+        const levels = await res.json();
+        const current = levels.find(l => l.id === state.currentLevelId);
+        if (current && current.cleared) {
+            state.currentLevelWasCleared = true;
+            showMilestoneToast(`Lv.${current.id} ${current.title} をクリアしました`);
+        }
+    } catch (e) {
+        // マイルストーン通知はおまけの演出なので、失敗しても他の処理には影響させない
+    }
 }
 
 async function loadProblemsForLevel() {
@@ -140,7 +164,7 @@ async function loadProblemsForLevel() {
         state.problemListOffset = page.items.length;
         problemListLoadMoreBtn.hidden = !page.hasMore;
     } catch (e) {
-        showError(problemListErrorBox, "問題一覧の取得に失敗しました: " + e.message);
+        showError(problemListErrorBox, "問題一覧の取得に失敗しました: " + friendlyErrorMessage(e));
     }
 }
 
@@ -153,7 +177,7 @@ async function loadMoreProblemsForLevel() {
         state.problemListOffset += page.items.length;
         problemListLoadMoreBtn.hidden = !page.hasMore;
     } catch (e) {
-        showError(problemListErrorBox, "追加読み込みに失敗しました: " + e.message);
+        showError(problemListErrorBox, "追加読み込みに失敗しました: " + friendlyErrorMessage(e));
     } finally {
         problemListLoadMoreBtn.disabled = false;
     }
@@ -181,7 +205,7 @@ async function generateProblem() {
         await loadProblemsForLevel();
         setTimeout(() => { problemListStatus.textContent = ""; }, 2500);
     } catch (e) {
-        showError(problemListErrorBox, "通信エラーが発生しました: " + e.message);
+        showError(problemListErrorBox, friendlyErrorMessage(e));
     } finally {
         generateProblemBtn.disabled = false;
         generateCountSelect.disabled = false;
@@ -189,6 +213,7 @@ async function generateProblem() {
 }
 
 async function loadFavorites() {
+    clearError(favoritesErrorBox);
     favoritesList.innerHTML = "";
     state.favoritesOffset = 0;
     try {
@@ -203,11 +228,12 @@ async function loadFavorites() {
         state.favoritesOffset = page.items.length;
         favoritesLoadMoreBtn.hidden = !page.hasMore;
     } catch (e) {
-        favoritesList.innerHTML = `<p class="empty">取得に失敗しました: ${e.message}</p>`;
+        showError(favoritesErrorBox, "取得に失敗しました: " + friendlyErrorMessage(e));
     }
 }
 
 async function loadMoreFavorites() {
+    clearError(favoritesErrorBox);
     favoritesLoadMoreBtn.disabled = true;
     try {
         const res = await fetch(`/api/problems/favorites?limit=${PAGE_SIZE}&offset=${state.favoritesOffset}`);
@@ -215,12 +241,15 @@ async function loadMoreFavorites() {
         page.items.forEach(p => renderProblemCard(p, favoritesList, true, "favorites"));
         state.favoritesOffset += page.items.length;
         favoritesLoadMoreBtn.hidden = !page.hasMore;
+    } catch (e) {
+        showError(favoritesErrorBox, "追加読み込みに失敗しました: " + friendlyErrorMessage(e));
     } finally {
         favoritesLoadMoreBtn.disabled = false;
     }
 }
 
 async function loadMistakes() {
+    clearError(mistakesErrorBox);
     mistakesList.innerHTML = "";
     state.mistakesOffset = 0;
     try {
@@ -235,11 +264,12 @@ async function loadMistakes() {
         state.mistakesOffset = page.items.length;
         mistakesLoadMoreBtn.hidden = !page.hasMore;
     } catch (e) {
-        mistakesList.innerHTML = `<p class="empty">取得に失敗しました: ${e.message}</p>`;
+        showError(mistakesErrorBox, "取得に失敗しました: " + friendlyErrorMessage(e));
     }
 }
 
 async function loadMoreMistakes() {
+    clearError(mistakesErrorBox);
     mistakesLoadMoreBtn.disabled = true;
     try {
         const res = await fetch(`/api/problems/mistakes?limit=${PAGE_SIZE}&offset=${state.mistakesOffset}`);
@@ -247,6 +277,8 @@ async function loadMoreMistakes() {
         page.items.forEach(p => renderProblemCard(p, mistakesList, true, "mistakes"));
         state.mistakesOffset += page.items.length;
         mistakesLoadMoreBtn.hidden = !page.hasMore;
+    } catch (e) {
+        showError(mistakesErrorBox, "追加読み込みに失敗しました: " + friendlyErrorMessage(e));
     } finally {
         mistakesLoadMoreBtn.disabled = false;
     }
@@ -268,7 +300,7 @@ function openProblemDetail(problem) {
 
     problemTitle.textContent = problem.title;
     problemDifficulty.textContent = problem.difficulty || "";
-    problemDescription.textContent = problem.description;
+    problemDescription.innerHTML = renderMarkdown(problem.description);
     setFavoriteButtonState(problem.favorite);
 
     if (problem.attempted && problem.correct !== null && problem.correct !== undefined) {
@@ -323,9 +355,12 @@ async function submitProblemAnswer() {
         renderJudgementBadge(problemCorrectBadge, data.isCorrect);
         state.currentProblem.attempted = true;
         state.currentProblem.correct = data.isCorrect;
+        if (data.isCorrect) {
+            await checkLevelClearMilestone();
+        }
         refreshHeaderStats();
     } catch (e) {
-        showError(problemErrorBox, e.message);
+        showError(problemErrorBox, friendlyErrorMessage(e));
     } finally {
         problemSubmitBtn.disabled = false;
         problemStatus.textContent = "";

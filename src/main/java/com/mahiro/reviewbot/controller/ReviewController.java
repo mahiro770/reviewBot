@@ -75,8 +75,17 @@ public class ReviewController {
                                                      @RequestParam(defaultValue = "0") int offset) {
         int effectiveLimit = limit <= 0 ? DEFAULT_LIMIT : Math.min(limit, MAX_LIMIT);
 
-        List<ReviewSummary> items = reviewRepository.findPageOrderByCreatedAtDesc(effectiveLimit, offset).stream()
-                .map(ReviewSummary::from)
+        List<CodeReview> page = reviewRepository.findPageOrderByCreatedAtDesc(effectiveLimit, offset);
+        List<Long> problemIds = page.stream()
+                .map(CodeReview::getProblemId)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
+        Map<Long, String> titlesById = problemRepository.findTitlesByIds(problemIds);
+
+        List<ReviewSummary> items = page.stream()
+                .map(review -> ReviewSummary.from(review,
+                        review.getProblemId() == null ? null : titlesById.get(review.getProblemId())))
                 .toList();
         int total = reviewRepository.count();
 

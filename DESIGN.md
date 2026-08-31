@@ -187,6 +187,9 @@ Used for every countdown/streak/badge/score/difficulty indicator (`.goal-widget`
 ### Icon System (signature component)
 A single custom inline-SVG line-icon set (`icons.js`) replaces all iconography app-wide — this app explicitly moved away from emoji icons to this set. Every icon shares one geometric language: 24×24 viewBox, `stroke-width: 1.8`, round `stroke-linecap`/`stroke-linejoin`, `stroke="currentColor"` (so color is always controlled by the surrounding CSS, never hardcoded), with `fill="none"` by default and an opt-in `filled` mode for solid glyphs (star, award). Display size is controlled purely by CSS utility classes (`.icon` 13px, `.icon-sm` 10px, `.icon-lg` 15px, `.title-icon` 16px), never by SVG attributes.
 
+### Milestone Toast (the one sanctioned celebration)
+A single, deliberately rare exception to the system's total stillness: a bottom-center pill that appears only when a level clears or a certification (Silver/Gold) completes — the two genuine milestones in a months-long study loop. It borrows the exact Signal Green Status Pill language (12% tint background, 40% tint border, solid green text, `check-circle` icon) rather than inventing new color or shape, fades/rises in over 0.2s, holds ~4s, then fades out — no confetti, sound, or emoji, and it never blocks input. This is the only place in the app where a transition is used to mark an emotional moment rather than a simple state change; it must not be reused for routine actions (saving a goal, submitting a review).
+
 ## Do's and Don'ts
 
 ### Do:
@@ -200,3 +203,4 @@ A single custom inline-SVG line-icon set (`icons.js`) replaces all iconography a
 - **Don't** use emoji as UI icons or tab/status labels — this system deliberately replaced its emoji icons with the `icons.js` line-icon set; never reintroduce emoji glyphs into the interface.
 - **Don't** introduce a second interactive accent color; Console Blue is the system's only "this is clickable" signal.
 - **Don't** repurpose Signal Green / Warning Amber / Alert Red for anything other than their pass / caution-or-streak / fail meaning — they are status signals, not a decorative palette.
+- **Don't** extend the Milestone Toast to routine actions (saves, submissions, tab switches) — it exists specifically to mark the rarity of a level/cert completion; using it more often erodes the one moment it's meant to carry.

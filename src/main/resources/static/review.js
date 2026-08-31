@@ -17,7 +17,7 @@ function renderReviewResult(data, resultBoxEl, scoreBadgeEl, reviewTextEl) {
     scoreBadgeEl.textContent = (data.score !== null && data.score !== undefined && data.score !== "")
         ? `スコア ${data.score} / 100`
         : "スコア未取得";
-    reviewTextEl.textContent = data.review;
+    reviewTextEl.innerHTML = renderMarkdown(data.review);
 }
 
 /** 問題に紐づくレビューの正誤判定バッジを描画する(isCorrectがnullの場合は非表示のまま) */
@@ -70,7 +70,7 @@ async function submitReview() {
         await loadHistory();
         refreshHeaderStats();
     } catch (e) {
-        showError(errorBox, e.message || ("通信エラーが発生しました: " + e.message));
+        showError(errorBox, friendlyErrorMessage(e));
     } finally {
         reviewBtn.disabled = false;
         statusEl.textContent = "";
@@ -87,8 +87,10 @@ function renderHistoryItem(item) {
             <span>${judgementIcon}${item.score !== null && item.score !== undefined ? item.score + "点" : "-"}</span>
             <span>${formatDate(item.createdAt)}</span>
         </div>
+        <div class="history-item-title"></div>
         <div class="code-preview"></div>
     `;
+    div.querySelector(".history-item-title").textContent = item.problemTitle || "自由投稿";
     div.querySelector(".code-preview").textContent = item.codePreview;
     makeClickable(div, () => loadReviewDetail(item.id));
     historyList.appendChild(div);
@@ -112,7 +114,11 @@ async function loadHistory() {
         historyOffset = page.items.length;
         historyLoadMoreBtn.hidden = !page.hasMore;
     } catch (e) {
-        historyList.innerHTML = `<p class="empty">履歴の取得に失敗しました: ${e.message}</p>`;
+        const empty = document.createElement("p");
+        empty.className = "empty";
+        empty.textContent = "履歴の取得に失敗しました: " + friendlyErrorMessage(e);
+        historyList.innerHTML = "";
+        historyList.appendChild(empty);
         historyLoadMoreBtn.hidden = true;
     }
 }
@@ -127,7 +133,7 @@ async function loadMoreHistory() {
         historyOffset += page.items.length;
         historyLoadMoreBtn.hidden = !page.hasMore;
     } catch (e) {
-        showError(errorBox, "履歴の追加読み込みに失敗しました: " + e.message);
+        showError(errorBox, "履歴の追加読み込みに失敗しました: " + friendlyErrorMessage(e));
     } finally {
         historyLoadMoreBtn.disabled = false;
     }
@@ -149,7 +155,7 @@ async function loadReviewDetail(id) {
         activateTab("review");
         window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e) {
-        showError(errorBox, "通信エラーが発生しました: " + e.message);
+        showError(errorBox, friendlyErrorMessage(e));
     }
 }
 

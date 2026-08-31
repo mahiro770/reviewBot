@@ -10,7 +10,9 @@ import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -87,6 +89,20 @@ public class ProblemRepository {
     public void setFavorite(long id, boolean favorite) {
         String sql = "UPDATE problems SET is_favorite = ? WHERE id = ?";
         jdbcTemplate.update(sql, favorite ? 1 : 0, id);
+    }
+
+    /** レビュー履歴一覧で、1件ずつ問い合わせるN+1を避けて問題タイトルをまとめて引くために使う */
+    public Map<Long, String> findTitlesByIds(List<Long> ids) {
+        if (ids.isEmpty()) {
+            return Map.of();
+        }
+        String placeholders = ids.stream().map(id -> "?").collect(java.util.stream.Collectors.joining(","));
+        String sql = "SELECT id, title FROM problems WHERE id IN (" + placeholders + ")";
+        Map<Long, String> titles = new HashMap<>();
+        jdbcTemplate.query(sql, rs -> {
+            titles.put(rs.getLong("id"), rs.getString("title"));
+        }, ids.toArray());
+        return titles;
     }
 
     private Problem mapRow(java.sql.ResultSet rs, int rowNum) throws java.sql.SQLException {

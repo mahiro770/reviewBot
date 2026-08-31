@@ -4,10 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Java学習システム</title>
-<link rel="stylesheet" href="style.css?v=6">
+<link rel="stylesheet" href="style.css?v=9">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 </head>
 <body>
+<div id="toastContainer" class="toast-container" aria-live="polite" role="status"></div>
+
 <header>
     <h1>Java学習システム</h1>
     <p class="subtitle">Spring Boot × Gemini API ― 目標設定・レベル別問題・AIレビュー・進捗可視化で学習を続けるためのツール</p>
@@ -82,10 +84,12 @@
     <div id="libFavorites" class="lib-view panel" hidden>
         <div id="favoritesList" class="problem-list"></div>
         <button id="favoritesLoadMoreBtn" class="link-btn" hidden style="margin-top:10px;">もっと見る</button>
+        <div id="favoritesErrorBox" class="error-box" hidden></div>
     </div>
     <div id="libMistakes" class="lib-view panel" hidden>
         <div id="mistakesList" class="problem-list"></div>
         <button id="mistakesLoadMoreBtn" class="link-btn" hidden style="margin-top:10px;">もっと見る</button>
+        <div id="mistakesErrorBox" class="error-box" hidden></div>
     </div>
 
     <!-- 問題一覧ビュー(選択したレベルの生成済み問題) -->
@@ -119,7 +123,7 @@
                 <button id="problemFavoriteBtn" class="favorite-btn" title="お気に入り"><svg class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
             </div>
         </div>
-        <pre id="problemDescription" class="review-text"></pre>
+        <div id="problemDescription" class="review-text"></div>
         <span id="problemCorrectBadge" class="score-badge" hidden></span>
 
         <label for="problemCodeInput" style="margin-top:16px;">あなたの回答コード</label>
@@ -139,7 +143,7 @@
                     <span id="problemScoreBadge" class="score-badge"></span>
                 </div>
             </div>
-            <pre id="problemReviewText" class="review-text"></pre>
+            <div id="problemReviewText" class="review-text"></div>
         </div>
     </div>
 </section>
@@ -163,7 +167,7 @@
                     <h2>レビュー結果</h2>
                     <span id="scoreBadge" class="score-badge"></span>
                 </div>
-                <pre id="reviewText" class="review-text"></pre>
+                <div id="reviewText" class="review-text"></div>
             </div>
         </div>
 
@@ -197,12 +201,13 @@
 
 </main>
 
-<script src="icons.js?v=6"></script>
-<script src="nav.js?v=6"></script>
-<script src="header.js?v=6"></script>
-<script src="goal.js?v=6"></script>
-<script src="review.js?v=6"></script>
-<script src="problem.js?v=6"></script>
-<script src="stats.js?v=6"></script>
+<script src="icons.js?v=9"></script>
+<script src="markdown.js?v=9"></script>
+<script src="nav.js?v=9"></script>
+<script src="header.js?v=9"></script>
+<script src="goal.js?v=9"></script>
+<script src="review.js?v=9"></script>
+<script src="problem.js?v=9"></script>
+<script src="stats.js?v=9"></script>
 </body>
 </html>

@@ -21,6 +21,17 @@ function clearError(box) {
     box.textContent = "";
 }
 
+/** エラー文言をアプリ全体で揃えるための共通ヘルパー。
+    サーバーが返した(すでに日本語の)エラーメッセージはそのまま使い、
+    fetch自体やJSON解析が失敗した場合(オフライン等)は "Failed to fetch" のような
+    ブラウザの生の技術的な文言を出さず、常に同じ日本語の案内にする */
+function friendlyErrorMessage(e) {
+    if (e instanceof TypeError || e instanceof SyntaxError) {
+        return "通信エラーが発生しました。ネットワーク接続を確認してください。";
+    }
+    return e && e.message ? e.message : "予期しないエラーが発生しました。";
+}
+
 function scoreClass(score) {
     if (score === null || score === undefined || score === "") return "";
     if (score >= 80) return "good";
@@ -47,4 +58,23 @@ function makeClickable(el, handler) {
             handler();
         }
     });
+}
+
+/** レベルクリア・資格達成など、数か月続く学習の節目だけに使う控えめな通知。
+    多用すると煩わしくなるので、本当の達成の瞬間だけで呼ぶこと */
+function showMilestoneToast(message) {
+    const container = document.getElementById("toastContainer");
+    if (!container) return;
+
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.innerHTML = `${iconSvg("check-circle", { className: "icon-lg" })} <span></span>`;
+    toast.querySelector("span").textContent = message;
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => toast.classList.add("show"));
+    setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => toast.remove(), 250);
+    }, 4000);
 }

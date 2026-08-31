@@ -12,8 +12,14 @@ public class ReviewSummary {
     private Integer score;
     private LocalDateTime createdAt;
     private Boolean isCorrect;
+    private String problemTitle;
 
     public static ReviewSummary from(CodeReview review) {
+        return from(review, null);
+    }
+
+    /** problemTitleは呼び出し側でproblemIdからまとめて引いて渡す(履歴一覧でのN+1回避のため) */
+    public static ReviewSummary from(CodeReview review, String problemTitle) {
         ReviewSummary summary = new ReviewSummary();
         summary.id = review.getId();
         String code = review.getCode() == null ? "" : review.getCode();
@@ -21,6 +27,7 @@ public class ReviewSummary {
         summary.score = review.getScore();
         summary.createdAt = review.getCreatedAt();
         summary.isCorrect = review.getIsCorrect();
+        summary.problemTitle = problemTitle;
         return summary;
     }
 
@@ -62,5 +69,13 @@ public class ReviewSummary {
 
     public void setIsCorrect(Boolean isCorrect) {
         this.isCorrect = isCorrect;
+    }
+
+    public String getProblemTitle() {
+        return problemTitle;
+    }
+
+    public void setProblemTitle(String problemTitle) {
+        this.problemTitle = problemTitle;
     }
 }

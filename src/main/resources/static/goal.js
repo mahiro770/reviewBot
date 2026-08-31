@@ -19,6 +19,7 @@ function renderGoalWidget(goal) {
     }
     goalWidget.hidden = false;
     const parts = [];
+    const isOverdue = goal.daysRemaining !== null && goal.daysRemaining !== undefined && goal.daysRemaining < 0;
     if (goal.daysRemaining !== null && goal.daysRemaining !== undefined) {
         parts.push(goal.daysRemaining >= 0 ? `目標まであと ${goal.daysRemaining} 日` : `目標日を ${-goal.daysRemaining} 日超過`);
     }
@@ -26,6 +27,7 @@ function renderGoalWidget(goal) {
         parts.push(`進捗 ${goal.progressPercent}%`);
     }
     goalWidget.innerHTML = parts.length ? `${iconSvg("target")} ${parts.join(" / ")}` : "";
+    goalWidget.classList.toggle("overdue", isOverdue);
     goalWidget.hidden = parts.length === 0;
 }
 
@@ -49,7 +51,7 @@ async function loadGoal() {
         fillGoalForm(data);
         renderGoalWidget(data);
     } catch (e) {
-        showError(goalErrorBox, "目標の取得に失敗しました: " + e.message);
+        showError(goalErrorBox, "目標の取得に失敗しました: " + friendlyErrorMessage(e));
     }
 }
 
@@ -86,7 +88,7 @@ async function saveGoal() {
         goalStatus.textContent = "保存しました";
         setTimeout(() => { goalStatus.textContent = ""; }, 2000);
     } catch (e) {
-        showError(goalErrorBox, "通信エラーが発生しました: " + e.message);
+        showError(goalErrorBox, friendlyErrorMessage(e));
     } finally {
         saveGoalBtn.disabled = false;
     }
