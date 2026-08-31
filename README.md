@@ -43,6 +43,23 @@ Controller → Service → Repository → DB という、これまで学習し�
 
 レビュー結果・目標・生成した問題はすべてSQLiteに保存され、アプリを再起動しても保持されます。
 
+## スクリーンショット
+
+(掲載画像は動作確認用のダミーデータで撮影しています)
+
+### 🎯 目標設定
+![目標タブ](docs/screenshots/goal.png)
+
+### 📚 レベル別問題集
+![問題集タブ](docs/screenshots/levels.png)
+
+### 📝 AIレビュー(バグ検出の例)
+実際にGeminiが「うるう年判定で100年区切りの例外処理が漏れている」バグを指摘した例です。
+![AIレビュー結果](docs/screenshots/review-result.png)
+
+### 📊 進捗の可視化
+![進捗タブ](docs/screenshots/stats.png)
+
 ## 事前準備
 
 - JDK 17以上 (`java -version` で確認)
@@ -127,12 +144,42 @@ Repository層はSQLiteのインメモリDB(`jdbc:sqlite::memory:`、`src/test/re
 対する統合テスト、Service層のロジック(連続学習日数の計算、レベルクリア判定など)はMockitoを使った
 単体テストになっています。
 
+## 設計判断
+
+なぜこの構成にしたか、判断の背景をまとめています。
+
+### なぜJPAではなくJDBC(JdbcTemplate)か
+学習目的のアプリのため、ORMに隠れずSQLを直接書く経験をあえて優先しました。JOINやN+1回避
+(複数IDをまとめて取得する`findByProblemIds`/`findTitlesByIds`など)を自分の手で意識して
+書けることを重視しています。
+
+### なぜSQLiteか
+個人利用・ローカル実行が前提のため、サーバー管理が不要な単一ファイルDBを選びました。
+`review.db`をコピーするだけでバックアップ・移行ができます。
+
+### Gemini APIとの向き合い方
+- 構造化出力(`responseSchema`)でJSON配列を強制し、自由記述からの正規表現抽出は避けています
+  (`GeminiProblemService` / `GeminiReviewService`)。
+- 429(レート制限)/5xxエラーは`GeminiClient`に集約して指数バックオフで自動リトライし、
+  無料枠のレート制限があることを前提にした設計にしています。
+- 問題生成は1回のAPI呼び出しでN問まとめて作る設計にし、問題数を増やしてもAPI呼び出し回数が
+  増えないようにしています。
+
+### レベルクリア判定を「2問正解」にした理由
+1問だけの正解では「たまたま」の可能性を排除できないため、複数問の正解を要求しています
+(`LevelProgressService.REQUIRED_CORRECT_TO_CLEAR`)。
+
+### 難易度の自動調整
+そのレベルでの直近5件の正誤判定から正解率を計算し(`LevelProgressService.recentPerformance`)、
+75%以上なら難易度を上げる、35%以下なら下げるようGeminiにソフトな指示(プロンプト内の文章)を
+出しています(`GeminiProblemService`)。`difficulty`フィールドの選択肢自体は制約せず、
+またレベル本来の出題範囲を優先させています。
+
 ## この状態からの発展アイデア
 
 - 案件配信ツールと同じくSupabaseに繋ぎ変えて、履歴をクラウドに保存する
 - ファイルアップロード(.javaファイル)に対応する
 - Spring Securityでログイン機能を追加する
-- 目標の達成度に応じて、翌日の問題の難易度をGeminiに自動調整させる
 - 週次/月次のサマリーをGeminiにまとめてもらう機能を追加する
 - レベル一覧・問題一覧をブラウザから編集できる管理画面を追加する(現状は`levels`テーブルを
   直接編集する必要がある)
